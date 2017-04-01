@@ -30,6 +30,29 @@ class WebRTCUtil: NSObject {
     static func mediaStreamConstraints()->RTCMediaConstraints{
         return RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
     }
+    
+    static func jsonFromDescription(description:RTCSessionDescription?)->NSDictionary?{
+        guard let description = description else{
+            print("description is nil")
+            return nil
+        }
+        
+        return jsonFromData(data: description.jsonData())
+    }
+    
+    static func jsonFromCandidate(candidate:RTCIceCandidate)->NSDictionary?{
+        return jsonFromData(data: candidate.jsonData())
+    }
+    
+    static func jsonFromData(data:Data)->NSDictionary?{
+        let json = try! JSONSerialization.jsonObject(with: data, options: [])
+        
+        guard let result = json as? NSDictionary else{
+            return nil
+        }
+        
+        return result
+    }
 
     
 }

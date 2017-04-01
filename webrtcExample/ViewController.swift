@@ -17,6 +17,17 @@ class ViewController: UIViewController {
         
         webRTC.setup()
         view.addSubview(webRTC.localView())
+        
+        createOffer()
+        connect(iceServerUrlList: ["stun:23.21.150.121", "stun:stun.l.google.com:19302"])
+    }
+    
+    private func createOffer(){
+        webRTC.createOffer()
+    }
+    
+    private func connect(iceServerUrlList:[String]){
+        webRTC.connect(iceServerUrlList: iceServerUrlList)
     }
 
     override func didReceiveMemoryWarning() {

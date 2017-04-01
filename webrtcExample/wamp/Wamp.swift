@@ -24,13 +24,14 @@ class Wamp: NSObject, SwampSessionDelegate {
     var delegate:WampDelegate?
     
     private override init() {
-        super.init()
+        super.init()        
     }
     
     func connect(){
 //    nakadoribooks-webrtc.herokuapp.com
         let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "wss://nakadoribooks-webrtc.herokuapp.com")!)
 //        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "ws://192.168.1.2:8000")!)
+//        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "ws://192.168.10.102:8000")!)
         let swampSession = SwampSession(realm: "realm1", transport: swampTransport)
         
         // Set delegate for callbacks

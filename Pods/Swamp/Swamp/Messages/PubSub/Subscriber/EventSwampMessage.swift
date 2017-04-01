@@ -32,7 +32,7 @@ class EventSwampMessage: SwampMessage {
     required init(payload: [Any]) {
         self.subscription = payload[0] as! Int
         self.publication = payload[1] as! Int
-        self.details = [:] // payload[2] as! [String: AnyObject]
+        self.details = payload[2] as! [String: AnyObject]
         self.args = payload[safe: 3] as? [AnyObject]
         self.kwargs = payload[safe: 4] as? [String: AnyObject]
     }

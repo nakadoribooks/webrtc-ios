@@ -16,7 +16,6 @@ enum SwampRole: String {
     case Publisher = "publisher"
     
     // Route roles
-//    case Broker = "broker"
-    case Broker = "brokder"
+    case Broker = "broker"
     case Dealer = "dealer"
 }

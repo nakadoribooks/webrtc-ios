@@ -249,9 +249,6 @@ open class SwampSession: SwampTransportDelegate {
         case let message as WelcomeSwampMessage:
             self.sessionId = message.sessionId
             let routerRoles = message.details["roles"]! as! [String : [String : Any]]
-            
-            print(routerRoles)
-            
             self.routerSupportedRoles = routerRoles.keys.map { SwampRole(rawValue: $0)! }
             self.delegate?.swampSessionConnected(self, sessionId: message.sessionId)
         case let message as GoodbyeSwampMessage:

@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		7B3FD6F31E8F749C00772830 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B3FD6F21E8F749C00772830 /* WebRTC.framework */; };
+		7B3FD6F51E8F74A000772830 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7B3FD6F21E8F749C00772830 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
+		7B873D421E8F8F02002E3F25 /* WebRTC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B873D381E8F8F02002E3F25 /* WebRTC.swift */; };
+		7B873D481E8F9D2A002E3F25 /* WebRTCUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B873D471E8F9D2A002E3F25 /* WebRTCUtil.swift */; };
 		7BC6FCE71E8F66A60003CC19 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BC6FCE61E8F66A60003CC19 /* AppDelegate.swift */; };
 		7BC6FCE91E8F66A60003CC19 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BC6FCE81E8F66A60003CC19 /* ViewController.swift */; };
 		7BC6FCEC1E8F66A60003CC19 /* Main.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 7BC6FCEA1E8F66A60003CC19 /* Main.storyboard */; };
@@ -33,7 +37,25 @@
 		};
 /* End PBXContainerItemProxy section */
 
+/* Begin PBXCopyFilesBuildPhase section */
+		7BC6FD181E8F678B0003CC19 /* Embed Frameworks */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 10;
+			files = (
+				7B3FD6F51E8F74A000772830 /* WebRTC.framework in Embed Frameworks */,
+			);
+			name = "Embed Frameworks";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
+		7B3FD6F21E8F749C00772830 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = WebRTC.framework; sourceTree = "<group>"; };
+		7B3FD6F61E8F794100772830 /* bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bridge.h; sourceTree = "<group>"; };
+		7B873D381E8F8F02002E3F25 /* WebRTC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebRTC.swift; sourceTree = "<group>"; };
+		7B873D471E8F9D2A002E3F25 /* WebRTCUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebRTCUtil.swift; sourceTree = "<group>"; };
 		7BC6FCE31E8F66A60003CC19 /* webrtcExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = webrtcExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7BC6FCE61E8F66A60003CC19 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		7BC6FCE81E8F66A60003CC19 /* ViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewController.swift; sourceTree = "<group>"; };
@@ -54,6 +76,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7B3FD6F31E8F749C00772830 /* WebRTC.framework in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -74,9 +97,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		7B873D371E8F8EDF002E3F25 /* webrtc */ = {
+			isa = PBXGroup;
+			children = (
+				7B873D471E8F9D2A002E3F25 /* WebRTCUtil.swift */,
+				7B873D381E8F8F02002E3F25 /* WebRTC.swift */,
+			);
+			path = webrtc;
+			sourceTree = "<group>";
+		};
 		7BC6FCDA1E8F66A50003CC19 = {
 			isa = PBXGroup;
 			children = (
+				7B3FD6F21E8F749C00772830 /* WebRTC.framework */,
 				7BC6FCE51E8F66A60003CC19 /* webrtcExample */,
 				7BC6FCFA1E8F66A60003CC19 /* webrtcExampleTests */,
 				7BC6FD051E8F66A60003CC19 /* webrtcExampleUITests */,
@@ -97,12 +130,14 @@
 		7BC6FCE51E8F66A60003CC19 /* webrtcExample */ = {
 			isa = PBXGroup;
 			children = (
+				7B873D371E8F8EDF002E3F25 /* webrtc */,
 				7BC6FCE61E8F66A60003CC19 /* AppDelegate.swift */,
 				7BC6FCE81E8F66A60003CC19 /* ViewController.swift */,
 				7BC6FCEA1E8F66A60003CC19 /* Main.storyboard */,
 				7BC6FCED1E8F66A60003CC19 /* Assets.xcassets */,
 				7BC6FCEF1E8F66A60003CC19 /* LaunchScreen.storyboard */,
 				7BC6FCF21E8F66A60003CC19 /* Info.plist */,
+				7B3FD6F61E8F794100772830 /* bridge.h */,
 			);
 			path = webrtcExample;
 			sourceTree = "<group>";
@@ -135,6 +170,7 @@
 				7BC6FCDF1E8F66A50003CC19 /* Sources */,
 				7BC6FCE01E8F66A50003CC19 /* Frameworks */,
 				7BC6FCE11E8F66A50003CC19 /* Resources */,
+				7BC6FD181E8F678B0003CC19 /* Embed Frameworks */,
 			);
 			buildRules = (
 			);
@@ -193,8 +229,8 @@
 				TargetAttributes = {
 					7BC6FCE21E8F66A50003CC19 = {
 						CreatedOnToolsVersion = 8.2.1;
-						DevelopmentTeam = 5GBK6MAQQE;
-						ProvisioningStyle = Automatic;
+						DevelopmentTeam = RHQWK52K6D;
+						ProvisioningStyle = Manual;
 					};
 					7BC6FCF61E8F66A60003CC19 = {
 						CreatedOnToolsVersion = 8.2.1;
@@ -262,7 +298,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				7B873D481E8F9D2A002E3F25 /* WebRTCUtil.swift in Sources */,
 				7BC6FCE91E8F66A60003CC19 /* ViewController.swift in Sources */,
+				7B873D421E8F8F02002E3F25 /* WebRTC.swift in Sources */,
 				7BC6FCE71E8F66A60003CC19 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -358,7 +396,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
@@ -401,7 +439,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
-				IPHONEOS_DEPLOYMENT_TARGET = 10.2;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				MTL_ENABLE_DEBUG_INFO = NO;
 				SDKROOT = iphoneos;
 				SWIFT_OPTIMIZATION_LEVEL = "-Owholemodule";
@@ -413,11 +451,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = 5GBK6MAQQE;
+				DEVELOPMENT_TEAM = RHQWK52K6D;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = webrtcExample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nakadoribooks.webrtcExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "34fe6207-f5c7-4488-950a-eba904a7ecf6";
+				PROVISIONING_PROFILE_SPECIFIER = wildcard_2017;
+				SWIFT_OBJC_BRIDGING_HEADER = webrtcExample/bridge.h;
 				SWIFT_VERSION = 3.0;
 			};
 			name = Debug;
@@ -426,11 +473,20 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
-				DEVELOPMENT_TEAM = 5GBK6MAQQE;
+				DEVELOPMENT_TEAM = RHQWK52K6D;
+				ENABLE_BITCODE = NO;
+				FRAMEWORK_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(PROJECT_DIR)",
+				);
 				INFOPLIST_FILE = webrtcExample/Info.plist;
+				IPHONEOS_DEPLOYMENT_TARGET = 10.0;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/Frameworks";
 				PRODUCT_BUNDLE_IDENTIFIER = com.nakadoribooks.webrtcExample;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE = "34fe6207-f5c7-4488-950a-eba904a7ecf6";
+				PROVISIONING_PROFILE_SPECIFIER = wildcard_2017;
+				SWIFT_OBJC_BRIDGING_HEADER = webrtcExample/bridge.h;
 				SWIFT_VERSION = 3.0;
 			};
 			name = Release;
@@ -512,6 +568,7 @@
 				7BC6FD0D1E8F66A60003CC19 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		7BC6FD0E1E8F66A60003CC19 /* Build configuration list for PBXNativeTarget "webrtcExampleTests" */ = {
 			isa = XCConfigurationList;
@@ -520,6 +577,7 @@
 				7BC6FD101E8F66A60003CC19 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		7BC6FD111E8F66A60003CC19 /* Build configuration list for PBXNativeTarget "webrtcExampleUITests" */ = {
 			isa = XCConfigurationList;
@@ -528,6 +586,7 @@
 				7BC6FD131E8F66A60003CC19 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};

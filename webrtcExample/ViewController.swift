@@ -10,16 +10,19 @@ import UIKit
 
 class ViewController: UIViewController {
 
+    private let webRTC = WebRTC.sharedInstance
+    
     override func viewDidLoad() {
         super.viewDidLoad()
-        // Do any additional setup after loading the view, typically from a nib.
+        
+        webRTC.setup()
+        view.addSubview(webRTC.localView())
     }
 
     override func didReceiveMemoryWarning() {
         super.didReceiveMemoryWarning()
         // Dispose of any resources that can be recreated.
     }
-
 
 }
 

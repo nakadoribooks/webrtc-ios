@@ -1,0 +1,21 @@
+PODS:
+  - CryptoSwift (0.6.8)
+  - Starscream (2.0.4)
+  - Swamp (0.2.0):
+    - CryptoSwift (~> 0.6.0)
+    - Starscream (~> 2.0.0)
+    - SwiftyJSON (~> 3.1.0)
+  - SwiftyJSON (3.1.4)
+
+DEPENDENCIES:
+  - Swamp (~> 0.2.0)
+
+SPEC CHECKSUMS:
+  CryptoSwift: f21ea03ed3a94e79d241648ce26652cd4810508a
+  Starscream: df5974ee928b157c8eda8af8de7c620276b7dfcc
+  Swamp: c702bf2d26f3e4d379321a481fcd807037e173fc
+  SwiftyJSON: c2842d878f95482ffceec5709abc3d05680c0220
+
+PODFILE CHECKSUM: 80b28bba7e612fc22dfaf59b53b326a87901eb63
+
+COCOAPODS: 1.2.0

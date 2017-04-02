@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		3F39836CD2DC5F065EB43339 /* Pods_webrtcExample.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7A719211931A859A019F3141 /* Pods_webrtcExample.framework */; };
+		7B3246681E908AB200E72D13 /* Util.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B3246671E908AB200E72D13 /* Util.swift */; };
 		7B3FD6F31E8F749C00772830 /* WebRTC.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 7B3FD6F21E8F749C00772830 /* WebRTC.framework */; };
 		7B3FD6F51E8F74A000772830 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7B3FD6F21E8F749C00772830 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		7B873D421E8F8F02002E3F25 /* WebRTC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B873D381E8F8F02002E3F25 /* WebRTC.swift */; };
@@ -60,6 +61,7 @@
 /* Begin PBXFileReference section */
 		3B6ED1162988B79B67BD574A /* Pods-webrtcExample.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-webrtcExample.release.xcconfig"; path = "Pods/Target Support Files/Pods-webrtcExample/Pods-webrtcExample.release.xcconfig"; sourceTree = "<group>"; };
 		7A719211931A859A019F3141 /* Pods_webrtcExample.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_webrtcExample.framework; sourceTree = BUILT_PRODUCTS_DIR; };
+		7B3246671E908AB200E72D13 /* Util.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Util.swift; sourceTree = "<group>"; };
 		7B3FD6F21E8F749C00772830 /* WebRTC.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; path = WebRTC.framework; sourceTree = "<group>"; };
 		7B3FD6F61E8F794100772830 /* bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bridge.h; sourceTree = "<group>"; };
 		7B873D381E8F8F02002E3F25 /* WebRTC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebRTC.swift; sourceTree = "<group>"; };
@@ -192,6 +194,7 @@
 				7BC6FCEF1E8F66A60003CC19 /* LaunchScreen.storyboard */,
 				7BC6FCF21E8F66A60003CC19 /* Info.plist */,
 				7B3FD6F61E8F794100772830 /* bridge.h */,
+				7B3246671E908AB200E72D13 /* Util.swift */,
 			);
 			path = webrtcExample;
 			sourceTree = "<group>";
@@ -419,6 +422,7 @@
 				7B873D421E8F8F02002E3F25 /* WebRTC.swift in Sources */,
 				7B9628201E8FAC7B00D3B770 /* RTCICECandidate+JSON.m in Sources */,
 				7B9628231E8FAC7B00D3B770 /* RTCSessionDescription+JSON.m in Sources */,
+				7B3246681E908AB200E72D13 /* Util.swift in Sources */,
 				7B9628211E8FAC7B00D3B770 /* RTCICEServer+JSON.m in Sources */,
 				7BC6FCE71E8F66A60003CC19 /* AppDelegate.swift in Sources */,
 			);

@@ -27,10 +27,6 @@ class WebRTCUtil: NSObject {
         return randomString
     }
     
-    static func mediaStreamConstraints()->RTCMediaConstraints{
-        return RTCMediaConstraints(mandatoryConstraints: nil, optionalConstraints: nil)
-    }
-    
     static func jsonFromDescription(description:RTCSessionDescription?)->NSDictionary?{
         guard let description = description else{
             print("description is nil")
@@ -52,6 +48,43 @@ class WebRTCUtil: NSObject {
         }
         
         return result
+    }
+    
+    static func answerConstraints()->RTCMediaConstraints{
+        let constraints = RTCMediaConstraints(
+            mandatoryConstraints: ["OfferToReceiveVideo": kRTCMediaConstraintsValueTrue,
+                                   "OfferToReceiveAudio": kRTCMediaConstraintsValueTrue],
+            optionalConstraints: nil)
+        
+        return constraints
+    }
+    
+    static func offerConstraints()->RTCMediaConstraints{
+        let constraints = RTCMediaConstraints(
+            mandatoryConstraints: ["OfferToReceiveVideo": kRTCMediaConstraintsValueTrue,
+                                   "OfferToReceiveAudio": kRTCMediaConstraintsValueTrue],
+            optionalConstraints: nil)
+        
+        return constraints
+    }
+    
+    static func mediaStreamConstraints()->RTCMediaConstraints{
+        
+        let constraints = RTCMediaConstraints(
+            mandatoryConstraints: nil,
+            optionalConstraints: nil)
+        
+        return constraints
+    }
+    
+    static func peerConnectionConstraints()->RTCMediaConstraints {
+        
+        let constraints = RTCMediaConstraints(
+            mandatoryConstraints: ["OfferToReceiveVideo": kRTCMediaConstraintsValueTrue,
+                                   "OfferToReceiveAudio": kRTCMediaConstraintsValueTrue],
+            optionalConstraints: nil)
+        
+        return constraints
     }
 
     

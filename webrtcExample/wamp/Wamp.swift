@@ -15,11 +15,13 @@ class Wamp: NSObject, SwampSessionDelegate {
     
     private static let AnswerTopic = "com.nakadoribook.webrtc.answer"
     private static let OfferTopic = "com.nakadoribook.webrtc.offer"
+    private static let CandidateTopic = "com.nakadoribook.webrtc.candidate"
     
     private var swampSession:SwampSession?
     private var onConnected:(()->())?
     private var onReceiveAnswer:((_ sdp:NSDictionary)->())?
     private var onReceiveOffer:((_ sdp:NSDictionary)->())?
+    private var onReceiveCandidate:((_ sdp:NSDictionary)->())?
     
     private var typeOffer:Bool = false
     
@@ -27,10 +29,15 @@ class Wamp: NSObject, SwampSessionDelegate {
         super.init()        
     }
     
-    func connect(onConnected:@escaping (()->()), onReceiveAnswer:@escaping ((_ sdp:NSDictionary)->()), onReceiveOffer:@escaping ((_ sdp:NSDictionary)->())){
+    func connect(onConnected:@escaping (()->())
+        , onReceiveAnswer:@escaping ((_ sdp:NSDictionary)->())
+        , onReceiveOffer:@escaping ((_ sdp:NSDictionary)->())
+        , onReceiveCandidate:@escaping ((_ candidate:NSDictionary)->())
+        ){
         self.onConnected = onConnected
         self.onReceiveAnswer = onReceiveAnswer
         self.onReceiveOffer = onReceiveOffer
+        self.onReceiveCandidate = onReceiveCandidate
 
         let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "wss://nakadoribooks-webrtc.herokuapp.com")!)
 //        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "ws://192.168.1.2:8000")!)
@@ -48,6 +55,14 @@ class Wamp: NSObject, SwampSessionDelegate {
     
     func publishAnswer(sdp:NSDictionary){
         swampSession?.publish(Wamp.AnswerTopic, options: [:], args: [sdp], kwargs: [:])
+    }
+    
+    func publishCandidate(candidate:NSDictionary){
+        if !typeOffer{
+            return;
+        }
+        print("publishCandidate:\(candidate)")
+        swampSession?.publish(Wamp.CandidateTopic, options: [:], args: [candidate], kwargs: [:])
     }
     
     // MARK: private
@@ -87,6 +102,27 @@ class Wamp: NSObject, SwampSessionDelegate {
             
             if let callback = self.onReceiveAnswer{
                 callback(sdp)
+            }
+        })
+        
+        swampSession?.subscribe(Wamp.CandidateTopic, onSuccess: { (subscription) in
+            
+        }, onError: { (details, error) in
+            print("onError: \(error)")
+        }, onEvent: { (details, results, kwResults) in
+            if self.typeOffer{
+                return;
+            }
+            
+            guard let candidate = results?.first as? NSDictionary else{
+                print("no args")
+                return;
+            }
+            
+            
+            print("receiveCandidate:\(candidate)")
+            if let callback = self.onReceiveCandidate{
+                callback(candidate)
             }
         })
         

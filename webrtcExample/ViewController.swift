@@ -38,8 +38,8 @@ class ViewController: UIViewController {
             self.stateWebrtcConnected()
         }
         
-        wamp.connect(onConnected: {
-            // wampサーバー接続完了
+        wamp.connect(onConnected: { 
+            
             self.stateConnected()
             
         }, onReceiveAnswer: { (answerSdp) in
@@ -56,6 +56,8 @@ class ViewController: UIViewController {
                 self.wamp.publishAnswer(sdp: answerSdp)
             }
             
+        }, onReceiveCandidate: { (candidate) in
+            self.webRTC.receiveCandidate(candidate: candidate)
         })
 
     }
@@ -89,8 +91,14 @@ class ViewController: UIViewController {
         
         stateOffering()
         
-        webRTC.createOffer { (sdp) in
+        webRTC.createOffer(callback: { (sdp) in
+            
             self.wamp.publishOffer(sdp: sdp)
+            
+        }) { (candidate) in
+            
+            self.wamp.publishCandidate(candidate: candidate)
+            
         }
     }
     

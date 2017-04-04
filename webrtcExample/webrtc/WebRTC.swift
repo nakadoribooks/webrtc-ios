@@ -11,6 +11,7 @@ import UIKit
 class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
 
     private var createdOfferCallback:((_ sdp:NSDictionary)->())?
+    private var didGenerateCandidate:((_ candidate:NSDictionary)->())?
     private var didReceiveRemoteStream:(()->())?
     
     private let factory = RTCPeerConnectionFactory()
@@ -65,9 +66,20 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         _receiveOffer(remoteSdp: remoteSdp, createdAnswer: createdAnswer)        
     }
     
+    func receiveCandidate(candidate:NSDictionary){
+        guard let candidate = candidate as? [AnyHashable:Any]
+            , let rtcCandidate = RTCIceCandidate(fromJSONDictionary: candidate) else{
+            print("invalid candiate")
+            return
+        }
+        
+        self.peerConnection?.add(rtcCandidate)
+    }
+    
     // Offerを作る
-    func createOffer(callback:@escaping (_ sdp:NSDictionary)->()){
+    func createOffer(callback:@escaping (_ sdp:NSDictionary)->(), didGenerateCandidate:@escaping (_ candidate:NSDictionary)->()){
         self.createdOfferCallback = callback
+        self.didGenerateCandidate = didGenerateCandidate
         _createOffer()
     }
     
@@ -137,8 +149,15 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
                 
             })
             
-            // 3. peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState) 
-            //    で complete になったら offerを送る
+            // 3. offer を送る
+            guard let callback = self.createdOfferCallback, let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
+                print("no localDescription")
+                return ;
+            }
+    
+            callback(localDescription)
+            self.createdOfferCallback = nil
+            
         })
     }
     
@@ -188,10 +207,19 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
     public func peerConnectionShouldNegotiate(_ peerConnection: RTCPeerConnection){}
     public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove stream: RTCMediaStream){}
     public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceConnectionState){}
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate){ }
     public func peerConnection(_ peerConnection: RTCPeerConnection, didRemove candidates: [RTCIceCandidate]){}
     public func peerConnection(_ peerConnection: RTCPeerConnection, didOpen dataChannel: RTCDataChannel){}
     public func peerConnection(_ peerConnection: RTCPeerConnection, didChange stateChanged: RTCSignalingState){}
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState){}
+    
+    // for Trickle ice
+    public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate){
+        print("didGenerate candidate")
+        
+        if let didGenerateCandidate = self.didGenerateCandidate, let candidateJson = WebRTCUtil.jsonFromData(data: candidate.jsonData()){
+            didGenerateCandidate(candidateJson)
+        }
+    }
     
     public func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream){
         print("peerConnection didAdd stream:")
@@ -212,22 +240,6 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
             }
             self.didReceiveRemoteStream = nil
         }
-    }
-    
-    public func peerConnection(_ peerConnection: RTCPeerConnection, didChange newState: RTCIceGatheringState){
-        print("peerConnection didChange newState: RTCIceGatheringState, \(newState)")
-        
-        if newState != .complete{
-            return;
-        }
-        
-        guard let callback = self.createdOfferCallback, let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
-            print("no localDescription")
-            return ;
-        }
-        
-        callback(localDescription)
-        self.createdOfferCallback = nil
     }
     
     // MARK: RTCEAGLVideoViewDelegate

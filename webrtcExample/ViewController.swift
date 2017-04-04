@@ -39,18 +39,20 @@ class ViewController: UIViewController {
         }
         
         wamp.connect(onConnected: {
-            
+            // wampサーバー接続完了
             self.stateConnected()
             
         }, onReceiveAnswer: { (answerSdp) in
-            
+            // Answerの受け取り → webRTCに渡す
             self.webRTC.receiveAnswer(remoteSdp: answerSdp)
             
         }, onReceiveOffer: { (offerSdp) in
             
             self.stateReceivedOffer()
             
+            // Offerの受け取り → webRTCに渡す
             self.webRTC.receiveOffer(remoteSdp: offerSdp) { (answerSdp) in
+                // webRTCからAnswerがでてくる → Answerを相手に渡す
                 self.wamp.publishAnswer(sdp: answerSdp)
             }
             

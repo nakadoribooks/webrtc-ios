@@ -16,6 +16,7 @@ class ViewController: UIViewController {
     private let videoLayer = UIView(frame: CGRect(x: 0, y: 0, width: 375, height: 375))
     private let controlButton = UIButton()
     private let infomationLabel = UILabel()
+    private var typeOffer:Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,32 +35,43 @@ class ViewController: UIViewController {
     
     private func connect(){
         
-        webRTC.connect(iceServerUrlList: ["stun:stun.l.google.com:19302"]) {
+        webRTC.connect(iceServerUrlList: ["stun:stun.l.google.com:19302"], onCreatedLocalSdp: { (localSdp) in
+            
+            if self.typeOffer{
+                self.wamp.publishOffer(sdp: localSdp)
+            }else{
+                self.wamp.publishAnswer(sdp: localSdp)
+            }
+            
+        }, didGenerateCandidate: { (candidate) in
+            
+            self.wamp.publishCandidate(candidate: candidate)
+            
+        }, didReceiveRemoteStream: { () in
             self.stateWebrtcConnected()
-        }
+        })
         
         wamp.connect(onConnected: { 
-            
             self.stateConnected()
-            
         }, onReceiveAnswer: { (answerSdp) in
-            // Answerの受け取り → webRTCに渡す
+            
             self.webRTC.receiveAnswer(remoteSdp: answerSdp)
             
         }, onReceiveOffer: { (offerSdp) in
             
-            self.stateReceivedOffer()
-            
-            // Offerの受け取り → webRTCに渡す
-            self.webRTC.receiveOffer(remoteSdp: offerSdp) { (answerSdp) in
-                // webRTCからAnswerがでてくる → Answerを相手に渡す
-                self.wamp.publishAnswer(sdp: answerSdp)
+            if self.typeOffer{
+                return;
             }
             
+            self.stateReceivedOffer()
+            self.webRTC.receiveOffer(remoteSdp: offerSdp)
+            
         }, onReceiveCandidate: { (candidate) in
+            
             self.webRTC.receiveCandidate(candidate: candidate)
+            
         })
-
+        
     }
     
     private func changeButton(title:String, color:UIColor, enabled:Bool){
@@ -87,19 +99,13 @@ class ViewController: UIViewController {
     // MARK: UIEvents
     
     private dynamic func tapOffer(){
+        typeOffer = true
+        
         buttonAnimation()
         
         stateOffering()
         
-        webRTC.createOffer(callback: { (sdp) in
-            
-            self.wamp.publishOffer(sdp: sdp)
-            
-        }) { (candidate) in
-            
-            self.wamp.publishCandidate(candidate: candidate)
-            
-        }
+        webRTC.createOffer()
     }
     
     private dynamic func tapConnect(){

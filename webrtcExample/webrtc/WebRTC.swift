@@ -10,9 +10,10 @@ import UIKit
 
 class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
 
-    private var createdOfferCallback:((_ sdp:NSDictionary)->())?
     private var didGenerateCandidate:((_ candidate:NSDictionary)->())?
+
     private var didReceiveRemoteStream:(()->())?
+    private var onCreatedLocalSdp:((_ localSdp:NSDictionary)->())?
     
     private let factory = RTCPeerConnectionFactory()
     
@@ -46,8 +47,12 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         setupLocalStream()
     }
     
-    func connect(iceServerUrlList:[String], didReceiveRemoteStream:(()->())?){
-        
+    func connect(iceServerUrlList:[String]
+        , onCreatedLocalSdp:@escaping ((_ localSdp:NSDictionary)->())
+        , didGenerateCandidate:@escaping ((_ localSdp:NSDictionary)->())
+        , didReceiveRemoteStream:@escaping (()->())){
+        self.onCreatedLocalSdp = onCreatedLocalSdp
+        self.didGenerateCandidate = didGenerateCandidate
         self.didReceiveRemoteStream = didReceiveRemoteStream
         
         let configuration = RTCConfiguration()
@@ -62,8 +67,8 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
     }
     
     // Offerの受け取り
-    func receiveOffer(remoteSdp:NSDictionary, createdAnswer:@escaping (_ answerSdp:NSDictionary)->()){
-        _receiveOffer(remoteSdp: remoteSdp, createdAnswer: createdAnswer)        
+    func receiveOffer(remoteSdp:NSDictionary){
+        _receiveOffer(remoteSdp: remoteSdp)
     }
     
     func receiveCandidate(candidate:NSDictionary){
@@ -77,9 +82,8 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
     }
     
     // Offerを作る
-    func createOffer(callback:@escaping (_ sdp:NSDictionary)->(), didGenerateCandidate:@escaping (_ candidate:NSDictionary)->()){
-        self.createdOfferCallback = callback
-        self.didGenerateCandidate = didGenerateCandidate
+
+    func createOffer(){
         _createOffer()
     }
     
@@ -96,11 +100,11 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         
         // 1. remote SDP を登録
         peerConnection?.setRemoteDescription(sdp, completionHandler: { (error) in
- 
+            
         })
     }
     
-    private func _receiveOffer(remoteSdp:NSDictionary, createdAnswer:@escaping (_ answerSdp:NSDictionary)->()){
+    private func _receiveOffer(remoteSdp:NSDictionary){
         
         guard let sdpContents = remoteSdp.object(forKey: "sdp") as? String else{
             print("noSDp")
@@ -122,14 +126,16 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
                 // 3.ローカルにSDPを登録
                 self.peerConnection?.setLocalDescription(sdp, completionHandler: { (error) in
                     
-                    guard let jsonSdp = WebRTCUtil.jsonFromDescription(description: sdp) else{
-                        print(" fail answer no sdp")
-                        return;
+                    // 3. answer を送る
+                    guard let callback = self.onCreatedLocalSdp, let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
+                        print("no localDescription")
+                        return ;
                     }
                     
-                    // 4. 相手にanswerを送る
-                    createdAnswer(jsonSdp)
+                    callback(localDescription)
+                    self.onCreatedLocalSdp = nil
                 })
+                
             })
         })
     }
@@ -150,13 +156,13 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
             })
             
             // 3. offer を送る
-            guard let callback = self.createdOfferCallback, let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
+            guard let callback = self.onCreatedLocalSdp, let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
                 print("no localDescription")
                 return ;
             }
     
             callback(localDescription)
-            self.createdOfferCallback = nil
+            self.onCreatedLocalSdp = nil
             
         })
     }
@@ -217,6 +223,7 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         print("didGenerate candidate")
         
         if let didGenerateCandidate = self.didGenerateCandidate, let candidateJson = WebRTCUtil.jsonFromData(data: candidate.jsonData()){
+            print("didGenerateCandidate")
             didGenerateCandidate(candidateJson)
         }
     }

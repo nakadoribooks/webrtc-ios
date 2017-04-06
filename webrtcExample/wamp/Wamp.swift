@@ -21,8 +21,6 @@ class Wamp: NSObject, SwampSessionDelegate {
     private var onReceiveAnswer:((_ sdp:NSDictionary)->())?
     private var onReceiveOffer:((_ sdp:NSDictionary)->())?
     
-    private var typeOffer:Bool = false
-    
     private override init() {
         super.init()        
     }
@@ -32,8 +30,8 @@ class Wamp: NSObject, SwampSessionDelegate {
         self.onReceiveAnswer = onReceiveAnswer
         self.onReceiveOffer = onReceiveOffer
 
-        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "wss://nakadoribooks-webrtc.herokuapp.com")!)
-//        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "ws://192.168.1.2:8000")!)
+//        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "wss://nakadoribooks-webrtc.herokuapp.com")!)
+        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "ws://192.168.1.2:8000")!)
         let swampSession = SwampSession(realm: "realm1", transport: swampTransport)
         swampSession.delegate = self
         swampSession.connect()
@@ -42,7 +40,6 @@ class Wamp: NSObject, SwampSessionDelegate {
     }
     
     func publishOffer(sdp:NSDictionary){
-        typeOffer = true
         swampSession?.publish(Wamp.OfferTopic, options: [:], args: [sdp], kwargs: [:])
     }
     
@@ -53,13 +50,15 @@ class Wamp: NSObject, SwampSessionDelegate {
     // MARK: private
     
     private func subscribe(){
+        _subscribeOffer()
+        _subscribeAnswer()
+    }
+    
+    private func _subscribeOffer(){
         swampSession!.subscribe(Wamp.OfferTopic, onSuccess: { subscription in
         }, onError: { details, error in
             print("onError: \(error)")
         }, onEvent: { details, results, kwResults in
-            if self.typeOffer{
-                return;
-            }
             
             guard let sdp = results?.first as? NSDictionary else{
                 print("no args")
@@ -70,15 +69,14 @@ class Wamp: NSObject, SwampSessionDelegate {
                 callback(sdp)
             }
         })
-        
+    }
+    
+    private func _subscribeAnswer(){
         swampSession!.subscribe(Wamp.AnswerTopic, onSuccess: { subscription in
+            
         }, onError: { details, error in
             print("onError: \(error)")
         }, onEvent: { details, results, kwResults in
-            
-            if !self.typeOffer{
-                return;
-            }
             
             guard let sdp = results?.first as? NSDictionary else{
                 print("no args")
@@ -89,7 +87,6 @@ class Wamp: NSObject, SwampSessionDelegate {
                 callback(sdp)
             }
         })
-        
     }
     
     // MARK: SwampSessionDelegate

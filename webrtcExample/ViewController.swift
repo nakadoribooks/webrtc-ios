@@ -16,6 +16,7 @@ class ViewController: UIViewController {
     private let videoLayer = UIView(frame: CGRect(x: 0, y: 0, width: 375, height: 375))
     private let controlButton = UIButton()
     private let infomationLabel = UILabel()
+    private var typeOffer:Bool = false
     
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -34,9 +35,17 @@ class ViewController: UIViewController {
     
     private func connect(){
         
-        webRTC.connect(iceServerUrlList: ["stun:stun.l.google.com:19302"]) {
+        webRTC.connect(iceServerUrlList: ["stun:stun.l.google.com:19302"], onCreatedLocalSdp: { (localSdp) in
+            
+            if self.typeOffer{
+                self.wamp.publishOffer(sdp: localSdp)
+            }else{
+                self.wamp.publishAnswer(sdp: localSdp)
+            }
+            
+        }, didReceiveRemoteStream: { () in
             self.stateWebrtcConnected()
-        }
+        })
         
         wamp.connect(onConnected: {
             
@@ -44,15 +53,20 @@ class ViewController: UIViewController {
             
         }, onReceiveAnswer: { (answerSdp) in
             
+            print("onReceiveAnswer")
+            
             self.webRTC.receiveAnswer(remoteSdp: answerSdp)
             
         }, onReceiveOffer: { (offerSdp) in
             
-            self.stateReceivedOffer()
-            
-            self.webRTC.receiveOffer(remoteSdp: offerSdp) { (answerSdp) in
-                self.wamp.publishAnswer(sdp: answerSdp)
+            if self.typeOffer{
+                return;
             }
+            
+            print("onReceiveOffer")
+            
+            self.stateReceivedOffer()
+            self.webRTC.receiveOffer(remoteSdp: offerSdp)
             
         })
 
@@ -83,13 +97,14 @@ class ViewController: UIViewController {
     // MARK: UIEvents
     
     private dynamic func tapOffer(){
+        typeOffer = true
+        
         buttonAnimation()
         
         stateOffering()
         
-        webRTC.createOffer { (sdp) in
-            self.wamp.publishOffer(sdp: sdp)
-        }
+        
+        webRTC.createOffer()
     }
     
     private dynamic func tapConnect(){

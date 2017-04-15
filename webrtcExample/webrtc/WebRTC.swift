@@ -83,7 +83,7 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         
         // 1. remote SDP を登録
         peerConnection?.setRemoteDescription(sdp, completionHandler: { (error) in
- 
+
         })
     }
     

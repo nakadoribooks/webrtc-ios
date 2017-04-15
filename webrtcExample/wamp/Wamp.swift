@@ -30,8 +30,8 @@ class Wamp: NSObject, SwampSessionDelegate {
         self.onReceiveAnswer = onReceiveAnswer
         self.onReceiveOffer = onReceiveOffer
 
-//        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "wss://nakadoribooks-webrtc.herokuapp.com")!)
-        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "ws://192.168.1.2:8000")!)
+        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "wss://nakadoribooks-webrtc.herokuapp.com")!)
+//        let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "ws://192.168.1.2:8000")!)
         let swampSession = SwampSession(realm: "realm1", transport: swampTransport)
         swampSession.delegate = self
         swampSession.connect()
@@ -49,6 +49,15 @@ class Wamp: NSObject, SwampSessionDelegate {
     
     // MARK: private
     
+    private func resultToSdp(results:[Any]?)->NSDictionary?{
+        
+        if let sdp = results?.first as? NSDictionary{
+            return sdp;
+        }
+        
+        return nil;
+    }
+    
     private func subscribe(){
         _subscribeOffer()
         _subscribeAnswer()
@@ -60,7 +69,7 @@ class Wamp: NSObject, SwampSessionDelegate {
             print("onError: \(error)")
         }, onEvent: { details, results, kwResults in
             
-            guard let sdp = results?.first as? NSDictionary else{
+            guard let sdp = self.resultToSdp(results: results) else{
                 print("no args")
                 return;
             }
@@ -78,7 +87,7 @@ class Wamp: NSObject, SwampSessionDelegate {
             print("onError: \(error)")
         }, onEvent: { details, results, kwResults in
             
-            guard let sdp = results?.first as? NSDictionary else{
+            guard let sdp = self.resultToSdp(results: results) else{
                 print("no args")
                 return;
             }

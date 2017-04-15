@@ -55,6 +55,10 @@ class ViewController: UIViewController {
             self.stateConnected()
         }, onReceiveAnswer: { (answerSdp) in
             
+            if !self.typeOffer{
+                return;
+            }
+            
             self.webRTC.receiveAnswer(remoteSdp: answerSdp)
             
         }, onReceiveOffer: { (offerSdp) in

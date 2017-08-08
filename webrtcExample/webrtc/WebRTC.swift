@@ -8,67 +8,114 @@
 
 import UIKit
 
+typealias WebRTCOnIceCandidateHandler = (_ candidate:NSDictionary) -> ()
+typealias WebRTCOnAddedStream = (_ stream:RTCMediaStream, _ view:UIView) -> ()
+typealias WebRTCOnRemoveStream = (_ stream:RTCMediaStream) -> ()
+typealias WebRTCCallbacks = (onIceCandidate:WebRTCOnIceCandidateHandler, onAddedStream:WebRTCOnAddedStream, onRemoveStream:WebRTCOnRemoveStream)
+
 class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
-
-    private var didGenerateCandidate:((_ candidate:NSDictionary)->())?
-
-    private var didReceiveRemoteStream:(()->())?
-    private var onCreatedLocalSdp:((_ localSdp:NSDictionary)->())?
     
-    private let factory = RTCPeerConnectionFactory()
+    // ▼ inner class -----
+    class LocalViewDelegate:NSObject, RTCEAGLVideoViewDelegate{
+        
+        private let localRenderView:RTCEAGLVideoView
+        
+        init(localRenderView:RTCEAGLVideoView){
+            self.localRenderView = localRenderView
+            super.init()
+            
+            localRenderView.delegate = self
+        }
+        
+        // MARK: RTCEAGLVideoViewDelegate
+        
+        func videoView(_ videoView: RTCEAGLVideoView, didChangeVideoSize size: CGSize) {
+            print("---- didChangeVideoSize -----")
+            
+            let ratio:CGFloat = size.width / size.height
+            
+            let width:CGFloat = 200.0
+            let height = width / ratio
+            localRenderView.frame = CGRect(x: 0, y: 0, width: width, height: height)            
+        }
+    }
     
-    private var localStream:RTCMediaStream?
-    private var localRenderView = RTCEAGLVideoView()
-    private let _localView = UIView(frame:CGRect(x:0, y:0, width:windowWidth()/3, height:windowWidth()/3))
+    // ▼ static -----
+    
+    private static let IceServerUrls = ["stun:stun.l.google.com:19302"]
+    private static let factory = RTCPeerConnectionFactory()
+    private static var localStream:RTCMediaStream?
+    private static var localRenderView = RTCEAGLVideoView()
+    private static let _localView = UIView(frame:CGRect(x:0, y:0, width:windowWidth()/3, height:windowWidth()/3))
+    private static var localViewDelegate:LocalViewDelegate!
+    static func setup(){
+        let streamId = WebRTCUtil.idWithPrefix(prefix: "stream")
+        localStream = factory.mediaStream(withStreamId: streamId)
+        
+        localViewDelegate = LocalViewDelegate(localRenderView: localRenderView)
+        _localView.backgroundColor = UIColor.white
+        _localView.frame.origin = CGPoint(x: 0, y: 0)
+        _localView.addSubview(localRenderView)
+        
+        setupLocalVideoTrack()
+        setupLocalAudioTrack()
+    }
+    
+    static var localView:UIView{
+        get{
+            return _localView
+        }
+    }
+    
+    private static func setupLocalVideoTrack(){
+        let localVideoSource = factory.avFoundationVideoSource(with: WebRTCUtil.mediaStreamConstraints())
+        let localVideoTrack = factory.videoTrack(with: localVideoSource, trackId: WebRTCUtil.idWithPrefix(prefix: "video"))
+        
+        if let avSource = localVideoTrack.source as? RTCAVFoundationVideoSource{
+            avSource.useBackCamera = true
+        }
+        
+        localVideoTrack.add(localRenderView)
+        localStream?.addVideoTrack(localVideoTrack)
+    }
+    
+    private static func setupLocalAudioTrack(){
+        let localAudioTrack = factory.audioTrack(withTrackId: WebRTCUtil.idWithPrefix(prefix: "audio"))
+        localStream?.addAudioTrack(localAudioTrack)
+    }
+    
+    // ▼ instance ------
     
     private var remoteStream:RTCMediaStream?
     private var remoteRenderView = RTCEAGLVideoView()
-    private let _remoteView = UIView(frame: CGRect(x: 0, y: 0, width: windowWidth(), height: windowWidth()))
+    private let _remoteView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
     
     private var peerConnection:RTCPeerConnection?
+    private let callbacks:WebRTCCallbacks
     
-    static let sharedInstance = WebRTC()
-    
-    private override init() {
+    init(callbacks:WebRTCCallbacks){
+        self.callbacks = callbacks
         super.init()
-    }
-    
-    // MARK: inerface
-    
-    func localView()->UIView{
-        return _localView
-    }
-    
-    func remoteView()->UIView{
-        return _remoteView
-    }
-    
-    func setup(){
-        setupLocalStream()
-    }
-    
-    func connect(iceServerUrlList:[String]
-        , onCreatedLocalSdp:@escaping ((_ localSdp:NSDictionary)->())
-        , didGenerateCandidate:@escaping ((_ localSdp:NSDictionary)->())
-        , didReceiveRemoteStream:@escaping (()->())){
-        self.onCreatedLocalSdp = onCreatedLocalSdp
-        self.didGenerateCandidate = didGenerateCandidate
-        self.didReceiveRemoteStream = didReceiveRemoteStream
         
+        setupPeerConnection()
+        
+        remoteView.backgroundColor = UIColor.red
+        remoteRenderView.backgroundColor = UIColor.blue
+        remoteRenderView.delegate = self
+        remoteView.addSubview(remoteRenderView)
+    }
+    
+    private func setupPeerConnection(){
         let configuration = RTCConfiguration()
-        configuration.iceServers = [RTCIceServer(urlStrings: iceServerUrlList)]
-        peerConnection = factory.peerConnection(with: configuration, constraints: WebRTCUtil.peerConnectionConstraints(), delegate: self)
-        peerConnection?.add(localStream!)
+        configuration.iceServers = [RTCIceServer(urlStrings: WebRTC.IceServerUrls)]
+        peerConnection = WebRTC.factory.peerConnection(with: configuration, constraints: WebRTCUtil.peerConnectionConstraints(), delegate: self)
+        peerConnection?.add(WebRTC.localStream!)
     }
     
-    // Answer の受け取り
-    func receiveAnswer(remoteSdp:NSDictionary){
-        _receiveAnswer(remoteSdp: remoteSdp)
-    }
-    
-    // Offerの受け取り
-    func receiveOffer(remoteSdp:NSDictionary){
-        _receiveOffer(remoteSdp: remoteSdp)
+    var remoteView:UIView{
+        get{
+            return _remoteView
+        }
     }
     
     func receiveCandidate(candidate:NSDictionary){
@@ -81,15 +128,7 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         self.peerConnection?.add(rtcCandidate)
     }
     
-    // Offerを作る
-
-    func createOffer(){
-        _createOffer()
-    }
-    
-    // MARK: implements
-    
-    private func _receiveAnswer(remoteSdp:NSDictionary){
+    func receiveAnswer(remoteSdp:NSDictionary){
         
         guard let sdpContents = remoteSdp.object(forKey: "sdp") as? String else{
             print("noSDp")
@@ -104,7 +143,7 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         })
     }
     
-    private func _receiveOffer(remoteSdp:NSDictionary){
+    func receiveOffer(remoteSdp:NSDictionary, callback:@escaping (_ answerSdp:NSDictionary)->()){
         
         guard let sdpContents = remoteSdp.object(forKey: "sdp") as? String else{
             print("noSDp")
@@ -127,20 +166,19 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
                 self.peerConnection?.setLocalDescription(sdp, completionHandler: { (error) in
                     
                     // 3. answer を送る
-                    guard let callback = self.onCreatedLocalSdp, let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
+                    guard let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
                         print("no localDescription")
                         return ;
                     }
                     
                     callback(localDescription)
-                    self.onCreatedLocalSdp = nil
                 })
                 
             })
         })
     }
     
-    private func _createOffer(){
+    func createOffer(callback:@escaping (_ offerSdp:NSDictionary)->()){
         
         // 1. offerを作る
         peerConnection?.offer(for: WebRTCUtil.mediaStreamConstraints(), completionHandler: { (description, error) in
@@ -152,60 +190,36 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
             
             // 2.ローカルにSDPを登録
             self.peerConnection?.setLocalDescription(description, completionHandler: { (error) in
+                // 3. offer を送る
+                guard let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
+                    print("no localDescription")
+                    return ;
+                }
                 
+                callback(localDescription)
             })
-            
-            // 3. offer を送る
-            guard let callback = self.onCreatedLocalSdp, let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
-                print("no localDescription")
-                return ;
-            }
-    
-            callback(localDescription)
-            self.onCreatedLocalSdp = nil
-            
         })
     }
     
-    private func setupLocalStream(){
-        
-        let streamId = WebRTCUtil.idWithPrefix(prefix: "stream")
-        localStream = factory.mediaStream(withStreamId: streamId)
-        
-        setupView()
-        
-        setupLocalVideoTrack()
-        setupLocalAudioTrack()
-    }
-    
-    private func setupView(){
-        
-        localRenderView.delegate = self
-        _localView.backgroundColor = UIColor.white
-        _localView.frame.origin = CGPoint(x: 20, y: _remoteView.frame.size.height - (_localView.frame.size.height / 2))
-        _localView.addSubview(localRenderView)
-        
-        remoteRenderView.delegate = self
-        _remoteView.backgroundColor = UIColor.lightGray
-        _remoteView.addSubview(remoteRenderView)
-    }
-    
-    private func setupLocalVideoTrack(){
-        let localVideoSource = factory.avFoundationVideoSource(with: WebRTCUtil.mediaStreamConstraints())
-        let localVideoTrack = factory.videoTrack(with: localVideoSource, trackId: WebRTCUtil.idWithPrefix(prefix: "video"))
-        
-        if let avSource = localVideoTrack.source as? RTCAVFoundationVideoSource{
-            avSource.useBackCamera = true
+    func close(){
+        if let localStream = WebRTC.localStream{
+            self.peerConnection?.remove(localStream)
         }
         
-        localVideoTrack.add(localRenderView)
-        localStream?.addVideoTrack(localVideoTrack)
+        self.peerConnection?.close()
+        self.peerConnection = nil
     }
     
-    private func setupLocalAudioTrack(){
-        let localAudioTrack = factory.audioTrack(withTrackId: WebRTCUtil.idWithPrefix(prefix: "audio"))
-        localStream?.addAudioTrack(localAudioTrack)
-    }
+//    private func setupLocalStream(){
+//        
+//        let streamId = WebRTCUtil.idWithPrefix(prefix: "stream")
+//        localStream = factory.mediaStream(withStreamId: streamId)
+//        
+//        setupView()
+//        
+//        setupLocalVideoTrack()
+//        setupLocalAudioTrack()
+//    }
     
     // MARK: RTCPeerConnectionDelegate
     
@@ -220,51 +234,33 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
     
     // for Trickle ice
     public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate){
-        print("didGenerate candidate")
         
-        if let didGenerateCandidate = self.didGenerateCandidate, let candidateJson = WebRTCUtil.jsonFromData(data: candidate.jsonData()){
-            print("didGenerateCandidate")
-            didGenerateCandidate(candidateJson)
+        if let candidateJson = WebRTCUtil.jsonFromCandidate(candidate: candidate){
+            self.callbacks.onIceCandidate(candidateJson)
         }
     }
     
     public func peerConnection(_ peerConnection: RTCPeerConnection, didAdd stream: RTCMediaStream){
-        print("peerConnection didAdd stream:")
-        
-        if stream == localStream{
-            return;
-        }
         
         self.remoteStream = stream
-        
         if let remoteVideoTrack =  stream.videoTracks.first {
             remoteVideoTrack.add(remoteRenderView)
         }
         
-        if let callback = self.didReceiveRemoteStream{
-            DispatchQueue.main.async {
-                callback()
-            }
-            self.didReceiveRemoteStream = nil
-        }
+        self.callbacks.onAddedStream(stream, remoteView)
     }
     
     // MARK: RTCEAGLVideoViewDelegate
     
     func videoView(_ videoView: RTCEAGLVideoView, didChangeVideoSize size: CGSize) {
-        print("---- didChangeVideoSize -----")
         
         let ratio:CGFloat = size.width / size.height
         
-        if videoView == localRenderView{
-            let parentWidth = _localView.frame.size.width
-            let width = parentWidth * ratio
-            localRenderView.frame = CGRect(x: (parentWidth - width) / 2, y: 2, width: width, height: _localView.frame.size.height-4)
-        }else if videoView == remoteRenderView{
-            let parentWidth = _remoteView.frame.size.width
-            let width = parentWidth * ratio
-            remoteRenderView.frame = CGRect(x: (parentWidth - width) / 2, y: 0, width: width, height: _remoteView.frame.size.height)
-        }
+        let width:CGFloat = windowWidth() / 3 - 10
+        let height = width / ratio
+        remoteRenderView.frame = CGRect(x: 0, y: 0, width: width, height: height)
+        
+        _remoteView.frame.size = remoteRenderView.frame.size
     }
     
 }

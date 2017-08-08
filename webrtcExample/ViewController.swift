@@ -7,161 +7,171 @@
 //
 
 import UIKit
+import FirebaseDatabase
+
+import UIKit
+
+extension String {
+    static func getRandomStringWithLength(length: Int) -> String {
+        
+        let alphabet = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        let upperBound = UInt32(alphabet.characters.count)
+        
+        return String((0..<length).map { _ -> Character in
+            return alphabet[alphabet.index(alphabet.startIndex, offsetBy: Int(arc4random_uniform(upperBound)))]
+        })
+    }
+}
 
 class ViewController: UIViewController {
 
-    private let webRTC = WebRTC.sharedInstance
     private let wamp = Wamp.sharedInstance
+    private var connectionList:[Connection] = []
+    private var streamWrapperList:[StreamWrapper] = []
     
-    private let videoLayer = UIView(frame: CGRect(x: 0, y: 0, width: 375, height: 375))
-    private let controlButton = UIButton()
-    private let infomationLabel = UILabel()
-    private var typeOffer:Bool = false
+    private let remoteLayer = UIView(frame: windowFrame())
+    private let localLayer = UIView(frame: CGRect(x: 20, y: windowHeight()-200, width: 200, height: 200))
+    private var roomKey:String!
+    private let userId = String.getRandomStringWithLength(length: 8)
+    
+    deinit {
+        print("ViewController deinit")
+    }
     
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        webRTC.setup()
+        setupRoom()
+        setupWamp()
+        setupStream()
         
-        view.addSubview(videoLayer)
-        videoLayer.addSubview(webRTC.remoteView())
-        videoLayer.addSubview(webRTC.localView())
+        Wamp.sharedInstance.connect()
         
-        view.addSubview(controlButton)
-        view.addSubview(infomationLabel)
+        view.addSubview(localLayer)
+        view.addSubview(remoteLayer)
         
-        stateInitial()
+        localLayer.backgroundColor = UIColor.blue
+        
+        localLayer.addSubview(WebRTC.localView)
     }
     
-    private func connect(){
+    private func setupStream(){
+        WebRTC.setup()
+    }
+    
+    private func setupRoom(){
+        let roomKey:String? = "-Kr-JqhdoZ1YtdeO0-9r"
         
-        webRTC.connect(iceServerUrlList: ["stun:stun.l.google.com:19302"], onCreatedLocalSdp: { (localSdp) in
-            
-            if self.typeOffer{
-                self.wamp.publishOffer(sdp: localSdp)
-            }else{
-                self.wamp.publishAnswer(sdp: localSdp)
+        if let roomKey = roomKey{
+            self.roomKey = roomKey
+            return
+        }
+        
+        let ref = Database.database().reference().child("rooms")
+        let roomRef = ref.childByAutoId()
+        self.roomKey = roomRef.key
+        
+        print("roomKey:\(roomRef.key)")
+    }
+    
+    private func setupWamp(){
+        
+        let wamp = Wamp.sharedInstance
+        Wamp.sharedInstance.setup(roomKey: roomKey, userId: userId
+        , callbacks: (
+            onOpen:{() -> Void in
+                print("onOpen")
+                
+                let topic = wamp.endpointCallme()
+                wamp.session.publish(topic, options: [:], args: [self.userId], kwargs: [:])
+            }
+            , onReceiveOffer:{(targetId:String, sdp:NSDictionary) -> Void in
+                print("onReceiveOffer")
+                let connection = self.createConnection(targetId: targetId)
+                connection.publishAnswer(offerSdp: sdp)
+            }
+            , onReceiveAnswer:{(targetId:String, sdp:NSDictionary) -> Void in
+                print("onReceiveAnswer")
+                guard let connection = self.findConnection(targetId: targetId) else{
+                    return
+                }
+                connection.receiveAnswer(sdp: sdp)
             }
             
-        }, didGenerateCandidate: { (candidate) in
-            
-            self.wamp.publishCandidate(candidate: candidate)
-            
-        }, didReceiveRemoteStream: { () in
-            self.stateWebrtcConnected()
-        })
-        
-        wamp.connect(onConnected: { 
-            self.stateConnected()
-        }, onReceiveAnswer: { (answerSdp) in
-            
-            if !self.typeOffer{
-                return;
+            , onReceiveCallme:{(targetId:String) -> Void in
+                print("onReceivCallme")
+                let connection = self.createConnection(targetId:targetId)
+                connection.publishOffer()
+            }
+            , onCloseConnection:{(targetId:String) -> Void in
+                print("onCloseConnection")
+                
+                // removeConnection
+                guard let removeIndex = self.connectionList.index(where: { (row) -> Bool in
+                    return row.targetId == targetId
+                }) else{
+                    return
+                }
+                
+                let connection = self.connectionList.remove(at: removeIndex)
+                connection.close()
+                
+                // removeView
+                guard let streamIndex = self.streamWrapperList.index(where: { (row) -> Bool in
+                    return row.targetId == targetId
+                }) else{
+                    return;
+                }
+                
+                let streamWrapper = self.streamWrapperList.remove(at: streamIndex)
+                streamWrapper.view.removeFromSuperview()
+            }
+       ))
+    }
+    
+    private func createConnection(targetId:String)->Connection{
+        let connection = Connection(myId: userId, targetId: targetId) { (streamWrapper) in
+            print("onAeedStream")
+            DispatchQueue.main.async {
+                self.remoteLayer.addSubview(streamWrapper.view)
+                self.streamWrapperList.append(streamWrapper)
+                
+                self.calcRemoteViewPosition()
             }
             
-            self.webRTC.receiveAnswer(remoteSdp: answerSdp)
-            
-        }, onReceiveOffer: { (offerSdp) in
-            
-            if self.typeOffer{
-                return;
+        }
+        connectionList.append(connection)
+        return connection
+    }
+    
+    private func findConnection(targetId:String)->Connection?{
+        for i in 0..<connectionList.count{
+            let connection = connectionList[i]
+            if(connection.targetId == targetId){
+                return connection
             }
-            
-            self.stateReceivedOffer()
-            self.webRTC.receiveOffer(remoteSdp: offerSdp)
-            
-        }, onReceiveCandidate: { (candidate) in
-            
-            self.webRTC.receiveCandidate(candidate: candidate)
-            
-        })
+        }
         
+        print("not found connection")
+        return nil
     }
     
-    private func changeButton(title:String, color:UIColor, enabled:Bool){
-        controlButton.layer.borderColor = color.cgColor
-        controlButton.setTitleColor(color, for: .normal)
-        controlButton.setTitle(title, for: .normal)
-        controlButton.isEnabled = enabled
+    private func calcRemoteViewPosition(){
+        var y:CGFloat = 20.0
+        var x:CGFloat = 20
         
-        controlButton.removeTarget(self, action: nil, for: .allEvents)
-    }
-    
-    private func changeInfomation(text:String, color:UIColor=UIColor.gray){
-        infomationLabel.text = text
-        infomationLabel.textColor = color
-    }
-    
-    private func buttonAnimation(){
-        controlButton.transform = CGAffineTransform(scaleX: 0.95, y: 0.95)
-        
-        UIView.animate(withDuration: 0.2) { 
-            self.controlButton.transform = CGAffineTransform(scaleX: 1.0, y: 1.0)
+        for i in 0..<streamWrapperList.count{
+            let view = streamWrapperList[i].view
+            view.frame.origin = CGPoint(x: x, y: y)
+            
+            if x + view.frame.size.width > windowWidth(){
+                x = 20
+                y = y + view.frame.size.height
+                view.frame.origin = CGPoint(x: x, y: y)
+            }
+            x = x + view.frame.size.width + 20
         }
     }
-    
-    // MARK: UIEvents
-    
-    private dynamic func tapOffer(){
-        typeOffer = true
-        
-        buttonAnimation()
-        
-        stateOffering()
-        
-        webRTC.createOffer()
-    }
-    
-    private dynamic func tapConnect(){
-        buttonAnimation()
-        
-        stateConnecting()
-        
-        connect()
-    }
-    
-    // MARK: states
-    
-    private func stateInitial(){
-        controlButton.frame = CGRect(x: 20, y: windowHeight()-64-20, width: windowWidth()-40, height: 64)
-        
-        controlButton.layer.cornerRadius = 5;
-        controlButton.layer.borderWidth = 2
-        controlButton.titleLabel?.font = UIFont.systemFont(ofSize: 22)
-        changeButton(title: "Connect", color: UIColor.orange, enabled: true)
-        controlButton.addTarget(self, action: #selector(ViewController.tapConnect), for: .touchUpInside)
-        
-        infomationLabel.frame = CGRect(x: 20, y: controlButton.frame.origin.y - 30 - 20, width: windowWidth()-40, height: 30)
-        infomationLabel.font = UIFont.systemFont(ofSize: 20)
-        infomationLabel.textAlignment = .center
-    }
-    
-    private func stateConnected(){
-        changeInfomation(text: "Connected!", color: UIColor.green)
-        
-        changeButton(title: "Send Offer", color: UIColor.blue, enabled: true)
-        controlButton.addTarget(self, action: #selector(ViewController.tapOffer), for: .touchUpInside)
-    }
-    
-    private func stateConnecting(){
-        changeButton(title: "Connecting...", color: UIColor.orange, enabled: false)
-        changeInfomation(text: "Connecting...")
-    }
-    
-    private func stateOffering(){
-        changeButton(title: "Offered", color: UIColor.gray, enabled: false)
-        changeInfomation(text: "Offering", color: UIColor.blue)
-    }
 
-    private func stateReceivedOffer(){
-        changeButton(title: "ReceivedOffer", color: UIColor.gray, enabled: false)
-        changeInfomation(text: "CreatingAnswer...", color: UIColor.blue)
-    }
-    
-    private func stateWebrtcConnected(){
-        changeButton(title: "OK!", color: UIColor.gray, enabled: false)
-        changeInfomation(text: "OK!", color: UIColor.green)
-    }
-    
 }
 

@@ -34,9 +34,19 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
             
             let ratio:CGFloat = size.width / size.height
             
-            let width:CGFloat = 200.0
-            let height = width / ratio
-            localRenderView.frame = CGRect(x: 0, y: 0, width: width, height: height)            
+            if ratio > 1.0{
+                // 横長
+                let height:CGFloat = WebRTC.ViewSize
+                let width:CGFloat = height * ratio
+                let x:CGFloat = (WebRTC.ViewSize - width) / 2.0
+                localRenderView.frame = CGRect(x: x, y: 0, width: width, height: height)
+            }else{
+                // 縦長
+                let width:CGFloat = WebRTC.ViewSize
+                let height:CGFloat = width / max(ratio, 0.1)
+                let y:CGFloat = (WebRTC.ViewSize - height) / 2.0
+                localRenderView.frame = CGRect(x: 0, y: y, width: width, height: height)
+            }
         }
     }
     
@@ -46,19 +56,31 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
     private static let factory = RTCPeerConnectionFactory()
     private static var localStream:RTCMediaStream?
     private static var localRenderView = RTCEAGLVideoView()
-    private static let _localView = UIView(frame:CGRect(x:0, y:0, width:windowWidth()/3, height:windowWidth()/3))
+    private static let _localView = UIView(frame:CGRect(x:10, y:10, width:WebRTC.ViewSize, height:WebRTC.ViewSize))
     private static var localViewDelegate:LocalViewDelegate!
+    
+    private static let Margin:CGFloat = 20.0
+    static let ViewSize:CGFloat = (windowWidth() - (WebRTC.Margin * 3)) / 2.0
+    
     static func setup(){
         let streamId = WebRTCUtil.idWithPrefix(prefix: "stream")
         localStream = factory.mediaStream(withStreamId: streamId)
         
         localViewDelegate = LocalViewDelegate(localRenderView: localRenderView)
         _localView.backgroundColor = UIColor.white
-        _localView.frame.origin = CGPoint(x: 0, y: 0)
+        _localView.clipsToBounds = true
         _localView.addSubview(localRenderView)
         
         setupLocalVideoTrack()
         setupLocalAudioTrack()
+    }
+    
+    static func disableVideo(){
+        localStream?.videoTracks.first?.isEnabled = false
+    }
+    
+    static func enableVideo(){
+        localStream?.videoTracks.first?.isEnabled = true
     }
     
     static var localView:UIView{
@@ -88,7 +110,7 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
     
     private var remoteStream:RTCMediaStream?
     private var remoteRenderView = RTCEAGLVideoView()
-    private let _remoteView = UIView(frame: CGRect(x: 0, y: 0, width: 0, height: 0))
+    private let _remoteView = UIView(frame: CGRect(x: 0, y: 0, width: WebRTC.ViewSize, height: WebRTC.ViewSize))
     
     private var peerConnection:RTCPeerConnection?
     private let callbacks:WebRTCCallbacks
@@ -99,8 +121,7 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         
         setupPeerConnection()
         
-        remoteView.backgroundColor = UIColor.red
-        remoteRenderView.backgroundColor = UIColor.blue
+        remoteView.clipsToBounds = true
         remoteRenderView.delegate = self
         remoteView.addSubview(remoteRenderView)
     }
@@ -210,17 +231,6 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         self.peerConnection = nil
     }
     
-//    private func setupLocalStream(){
-//        
-//        let streamId = WebRTCUtil.idWithPrefix(prefix: "stream")
-//        localStream = factory.mediaStream(withStreamId: streamId)
-//        
-//        setupView()
-//        
-//        setupLocalVideoTrack()
-//        setupLocalAudioTrack()
-//    }
-    
     // MARK: RTCPeerConnectionDelegate
     
     // いったんスルー
@@ -247,7 +257,9 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
             remoteVideoTrack.add(remoteRenderView)
         }
         
-        self.callbacks.onAddedStream(stream, remoteView)
+        DispatchQueue.main.async {
+            self.callbacks.onAddedStream(stream, self.remoteView)
+        }
     }
     
     // MARK: RTCEAGLVideoViewDelegate
@@ -256,11 +268,20 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
         
         let ratio:CGFloat = size.width / size.height
         
-        let width:CGFloat = windowWidth() / 3 - 10
-        let height = width / ratio
-        remoteRenderView.frame = CGRect(x: 0, y: 0, width: width, height: height)
+        if ratio > 1.0{
+            // 横長
+            let height:CGFloat = WebRTC.ViewSize
+            let width:CGFloat = height * ratio
+            let x:CGFloat = (WebRTC.ViewSize - width) / 2.0
+            remoteRenderView.frame = CGRect(x: x, y: 0, width: width, height: height)
+        }else{
+            // 縦長
+            let width:CGFloat = WebRTC.ViewSize
+            let height:CGFloat = width / max(ratio, 0.1)
+            let y:CGFloat = (WebRTC.ViewSize - height) / 2.0
+            remoteRenderView.frame = CGRect(x: 0, y: y, width: width, height: height)
+        }
         
-        _remoteView.frame.size = remoteRenderView.frame.size
     }
     
 }

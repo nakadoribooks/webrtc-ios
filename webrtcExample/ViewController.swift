@@ -30,9 +30,10 @@ class ViewController: UIViewController {
     private var streamWrapperList:[StreamWrapper] = []
     
     private let remoteLayer = UIView(frame: windowFrame())
-    private let localLayer = UIView(frame: CGRect(x: 20, y: windowHeight()-200, width: 200, height: 200))
+    private let localLayer = UIView(frame: CGRect(x: 0, y: windowHeight()-WebRTC.ViewSize - 20, width: windowWidth(), height: WebRTC.ViewSize + 20))
     private var roomKey:String!
     private let userId = String.getRandomStringWithLength(length: 8)
+    private let toggleButton = UIButton()
     
     deinit {
         print("ViewController deinit")
@@ -47,12 +48,47 @@ class ViewController: UIViewController {
         
         Wamp.sharedInstance.connect()
         
-        view.addSubview(localLayer)
         view.addSubview(remoteLayer)
+        view.addSubview(localLayer)
         
-        localLayer.backgroundColor = UIColor.blue
-        
+        localLayer.backgroundColor = UIColor.gray
         localLayer.addSubview(WebRTC.localView)
+        
+        let labelX = WebRTC.ViewSize + 20.0
+        let labelWidth = windowWidth() - labelX - 10
+        let label = UILabel(frame: CGRect(x: labelX, y: 10, width: labelWidth, height: 50))
+        label.numberOfLines = 2
+        label.font = UIFont.systemFont(ofSize: 20.0)
+        label.textColor = UIColor.white
+        label.text = "You\n(\(self.userId))"
+        label.sizeToFit()
+        localLayer.addSubview(label)
+        
+        let y:CGFloat = label.frame.size.height + 20
+        
+        toggleButton.frame = CGRect(x: labelX, y: y, width: labelWidth, height: 44)
+        toggleButton.backgroundColor = UIColor.white
+        toggleButton.layer.cornerRadius = 5
+        toggleButton.clipsToBounds = true
+        toggleButton.setTitleColor(UIColor.gray, for: .normal)
+        toggleButton.setTitle("Stop", for: .normal)
+        toggleButton.setTitle("Play", for: .selected)
+        toggleButton.addTarget(self, action: #selector(ViewController.tapToggle), for: .touchUpInside)
+        localLayer.addSubview(toggleButton)
+    }
+    
+    private dynamic func tapToggle(){
+        
+        print("tap")
+        
+        toggleButton.isSelected = !toggleButton.isSelected
+        
+        let active = !toggleButton.isSelected
+        if active{
+            WebRTC.enableVideo()
+        }else{
+            WebRTC.disableVideo()
+        }
     }
     
     private func setupStream(){
@@ -125,6 +161,8 @@ class ViewController: UIViewController {
                 
                 let streamWrapper = self.streamWrapperList.remove(at: streamIndex)
                 streamWrapper.view.removeFromSuperview()
+                
+                self.calcRemoteViewPosition()
             }
        ))
     }
@@ -132,12 +170,11 @@ class ViewController: UIViewController {
     private func createConnection(targetId:String)->Connection{
         let connection = Connection(myId: userId, targetId: targetId) { (streamWrapper) in
             print("onAeedStream")
-            DispatchQueue.main.async {
-                self.remoteLayer.addSubview(streamWrapper.view)
-                self.streamWrapperList.append(streamWrapper)
-                
-                self.calcRemoteViewPosition()
-            }
+            
+            self.remoteLayer.addSubview(streamWrapper.view)
+            self.streamWrapperList.append(streamWrapper)
+            
+            self.calcRemoteViewPosition()
             
         }
         connectionList.append(connection)

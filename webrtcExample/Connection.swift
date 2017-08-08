@@ -21,6 +21,23 @@ class StreamWrapper:NSObject{
         self.targetId = targetId
         self.view = view
         super.init()
+        
+        let overlay = UIView()
+        overlay.frame.size = view.frame.size
+        view.addSubview(overlay)
+        
+        let labelBg = UIView()
+        labelBg.frame = CGRect(x: 0, y: view.frame.size.height - 30, width: view.frame.size.width, height: 30)
+        labelBg.backgroundColor = UIColor.white
+        labelBg.alpha = 0.8
+        overlay.addSubview(labelBg)
+        
+        let label = UILabel()
+        label.frame = CGRect(x: 0, y: view.frame.size.height - 30, width: view.frame.size.width, height: 30)
+        label.textAlignment = .center
+        label.text = targetId
+        label.textColor = UIColor.black
+        overlay.addSubview(label)
     }
 }
 

@@ -141,11 +141,15 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate, RTCEAGLVideoViewDelegate {
     
     func receiveCandidate(candidate:NSDictionary){
         guard let candidate = candidate as? [AnyHashable:Any]
-            , let rtcCandidate = RTCIceCandidate(fromJSONDictionary: candidate) else{
-            print("invalid candiate")
+            , let sdp = candidate["candidate"] as? String
+            , let sdpMLineIndex = candidate["sdpMLineIndex"] as? Int32
+            , let sdpMid = candidate["sdpMid"] as? String else{
+                
+                print("invalid candiate")
             return
         }
         
+        let rtcCandidate = RTCIceCandidate(sdp: sdp, sdpMLineIndex: sdpMLineIndex, sdpMid: sdpMid)
         self.peerConnection?.add(rtcCandidate)
     }
     

@@ -42,6 +42,10 @@ class Wamp: NSObject, SwampSessionDelegate {
         super.init()        
     }
     
+    deinit {
+        print("deinit Wamp")
+    }
+    
     var session:SwampSession{
         get{
             return _session
@@ -76,9 +80,12 @@ class Wamp: NSObject, SwampSessionDelegate {
         self._session = session
         
         // subscribe
+        print("answerTopic", endpointAnswer(targetId: userId))
+        
         session.subscribe(endpointAnswer(targetId: userId), onSuccess: { (subscription) in
         }, onError: { (details, error) in
         }) { (details, args, kwArgs) in
+            print("onReceiveAnswer")
             guard let args = args, let targetId = args[0] as? String, let sdpString = args[1] as? String else{
                 print("no args answer")
                 return
@@ -88,6 +95,7 @@ class Wamp: NSObject, SwampSessionDelegate {
             self.callbacks.onReceiveAnswer(targetId, sdp)
         }
         
+        print("offerTopic", endpointOffer(targetId: userId))
         session.subscribe(endpointOffer(targetId: userId), onSuccess: { (subscription) in
         }, onError: { (details, error) in
         }) { (details, args, kwArgs) in
@@ -128,7 +136,8 @@ class Wamp: NSObject, SwampSessionDelegate {
             
             self.callbacks.onCloseConnection(targetId)
         }
-                
+
+        
         self.callbacks.onOpen()
     }
     

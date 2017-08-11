@@ -57,12 +57,13 @@ class Connection: NSObject {
         
         webRtc = WebRTC(callbacks: (
             onIceCandidate: {(iceCandidate:NSDictionary) -> Void in
-                
+
                 let jsonData = try! JSONSerialization.data(withJSONObject: iceCandidate, options: [])
                 let jsonStr = String(bytes: jsonData, encoding: .utf8)!
                 
                 let wamp = Wamp.sharedInstance
                 let topic = wamp.endpointCandidate(targetId: targetId)
+                
                 wamp.session.publish(topic, options: [:], args: [jsonStr], kwargs: [:])
             }
             , onAddedStream: {(stream:RTCMediaStream, view:UIView) -> Void in
@@ -80,11 +81,14 @@ class Connection: NSObject {
     
     private func subscribeCandidate(){
         let wamp = Wamp.sharedInstance
+        
         let candidateTopic = wamp.endpointCandidate(targetId: myId)
+        print("subscribe", candidateTopic)
         
         Wamp.sharedInstance.session.subscribe(candidateTopic, onSuccess: { (subscription) in
         }, onError: { (results, error) in
         }) { (results, args, kwArgs) in
+            print("oNCancidateA")
             
             guard let candidateStr = args?.first as? String else{
                 print(args?.first)
@@ -96,6 +100,25 @@ class Connection: NSObject {
             let candidate = try! JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments) as! NSDictionary
                         
             self.webRtc.receiveCandidate(candidate: candidate)
+        }
+        
+        // ここから
+        let answerTopic = wamp.endpointAnswer(targetId: myId)
+        
+        Wamp.sharedInstance.session.subscribe(answerTopic, onSuccess: { (subscription) in
+        }, onError: { (details, error) in
+            print("error")
+            print(details);
+            print(error)
+        }) { (details, args, kwArgs) in
+            print("on Anser!!!!!")
+            guard let args = args, let targetId = args[0] as? String, let sdpString = args[1] as? String else{
+                print("no args answer")
+                return
+            }
+            
+            let sdp = try! JSONSerialization.jsonObject(with: sdpString.data(using: .utf8)!, options: .allowFragments) as! NSDictionary
+//            self.callbacks.onReceiveAnswer(targetId, sdp)
         }
     }
     
@@ -116,6 +139,7 @@ class Connection: NSObject {
     }
     
     func publishOffer(){
+        print("publishOffer")
         webRtc.createOffer { (offerSdp) in
             let wamp = Wamp.sharedInstance
             let topic = wamp.endpointOffer(targetId: self.targetId)
@@ -129,10 +153,6 @@ class Connection: NSObject {
     
     func receiveAnswer(sdp:NSDictionary){
         webRtc.receiveAnswer(remoteSdp: sdp)
-    }
-    
-    func receiveCnadidate(candidate:NSDictionary){
-        
     }
     
     func close(){

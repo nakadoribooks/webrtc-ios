@@ -13,10 +13,6 @@
 		7B3FD6F51E8F74A000772830 /* WebRTC.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = 7B3FD6F21E8F749C00772830 /* WebRTC.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		7B873D421E8F8F02002E3F25 /* WebRTC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B873D381E8F8F02002E3F25 /* WebRTC.swift */; };
 		7B873D481E8F9D2A002E3F25 /* WebRTCUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B873D471E8F9D2A002E3F25 /* WebRTCUtil.swift */; };
-		7B9628201E8FAC7B00D3B770 /* RTCICECandidate+JSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 7B9628191E8FAC7B00D3B770 /* RTCICECandidate+JSON.m */; };
-		7B9628211E8FAC7B00D3B770 /* RTCICEServer+JSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 7B96281B1E8FAC7B00D3B770 /* RTCICEServer+JSON.m */; };
-		7B9628221E8FAC7B00D3B770 /* RTCMediaConstraints+JSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 7B96281D1E8FAC7B00D3B770 /* RTCMediaConstraints+JSON.m */; };
-		7B9628231E8FAC7B00D3B770 /* RTCSessionDescription+JSON.m in Sources */ = {isa = PBXBuildFile; fileRef = 7B96281F1E8FAC7B00D3B770 /* RTCSessionDescription+JSON.m */; };
 		7B9628261E8FB23E00D3B770 /* Wamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9628251E8FB23E00D3B770 /* Wamp.swift */; };
 		7BA761321F3943D600AB4505 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7BA761311F3943D600AB4505 /* GoogleService-Info.plist */; };
 		7BA761341F396D7700AB4505 /* Connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA761331F396D7700AB4505 /* Connection.swift */; };
@@ -68,14 +64,6 @@
 		7B3FD6F61E8F794100772830 /* bridge.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = bridge.h; sourceTree = "<group>"; };
 		7B873D381E8F8F02002E3F25 /* WebRTC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebRTC.swift; sourceTree = "<group>"; };
 		7B873D471E8F9D2A002E3F25 /* WebRTCUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebRTCUtil.swift; sourceTree = "<group>"; };
-		7B9628181E8FAC7B00D3B770 /* RTCICECandidate+JSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "RTCICECandidate+JSON.h"; sourceTree = "<group>"; };
-		7B9628191E8FAC7B00D3B770 /* RTCICECandidate+JSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "RTCICECandidate+JSON.m"; sourceTree = "<group>"; };
-		7B96281A1E8FAC7B00D3B770 /* RTCICEServer+JSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "RTCICEServer+JSON.h"; sourceTree = "<group>"; };
-		7B96281B1E8FAC7B00D3B770 /* RTCICEServer+JSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "RTCICEServer+JSON.m"; sourceTree = "<group>"; };
-		7B96281C1E8FAC7B00D3B770 /* RTCMediaConstraints+JSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "RTCMediaConstraints+JSON.h"; sourceTree = "<group>"; };
-		7B96281D1E8FAC7B00D3B770 /* RTCMediaConstraints+JSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "RTCMediaConstraints+JSON.m"; sourceTree = "<group>"; };
-		7B96281E1E8FAC7B00D3B770 /* RTCSessionDescription+JSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = "RTCSessionDescription+JSON.h"; sourceTree = "<group>"; };
-		7B96281F1E8FAC7B00D3B770 /* RTCSessionDescription+JSON.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = "RTCSessionDescription+JSON.m"; sourceTree = "<group>"; };
 		7B9628251E8FB23E00D3B770 /* Wamp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Wamp.swift; sourceTree = "<group>"; };
 		7BA761311F3943D600AB4505 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		7BA761331F396D7700AB4505 /* Connection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
@@ -133,26 +121,10 @@
 		7B873D371E8F8EDF002E3F25 /* webrtc */ = {
 			isa = PBXGroup;
 			children = (
-				7B9628171E8FAC7B00D3B770 /* rtcExtension */,
 				7B873D471E8F9D2A002E3F25 /* WebRTCUtil.swift */,
 				7B873D381E8F8F02002E3F25 /* WebRTC.swift */,
 			);
 			path = webrtc;
-			sourceTree = "<group>";
-		};
-		7B9628171E8FAC7B00D3B770 /* rtcExtension */ = {
-			isa = PBXGroup;
-			children = (
-				7B9628181E8FAC7B00D3B770 /* RTCICECandidate+JSON.h */,
-				7B9628191E8FAC7B00D3B770 /* RTCICECandidate+JSON.m */,
-				7B96281A1E8FAC7B00D3B770 /* RTCICEServer+JSON.h */,
-				7B96281B1E8FAC7B00D3B770 /* RTCICEServer+JSON.m */,
-				7B96281C1E8FAC7B00D3B770 /* RTCMediaConstraints+JSON.h */,
-				7B96281D1E8FAC7B00D3B770 /* RTCMediaConstraints+JSON.m */,
-				7B96281E1E8FAC7B00D3B770 /* RTCSessionDescription+JSON.h */,
-				7B96281F1E8FAC7B00D3B770 /* RTCSessionDescription+JSON.m */,
-			);
-			path = rtcExtension;
 			sourceTree = "<group>";
 		};
 		7B9628241E8FB08C00D3B770 /* wamp */ = {
@@ -425,13 +397,9 @@
 				7B873D481E8F9D2A002E3F25 /* WebRTCUtil.swift in Sources */,
 				7BA761341F396D7700AB4505 /* Connection.swift in Sources */,
 				7B9628261E8FB23E00D3B770 /* Wamp.swift in Sources */,
-				7B9628221E8FAC7B00D3B770 /* RTCMediaConstraints+JSON.m in Sources */,
 				7BC6FCE91E8F66A60003CC19 /* ViewController.swift in Sources */,
 				7B873D421E8F8F02002E3F25 /* WebRTC.swift in Sources */,
-				7B9628201E8FAC7B00D3B770 /* RTCICECandidate+JSON.m in Sources */,
-				7B9628231E8FAC7B00D3B770 /* RTCSessionDescription+JSON.m in Sources */,
 				7B3246681E908AB200E72D13 /* Util.swift in Sources */,
-				7B9628211E8FAC7B00D3B770 /* RTCICEServer+JSON.m in Sources */,
 				7BC6FCE71E8F66A60003CC19 /* AppDelegate.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

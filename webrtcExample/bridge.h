@@ -11,9 +11,4 @@
 
 #import <WebRTC/WebRTC.h>
 
-#import "RTCICECandidate+JSON.h"
-#import "RTCICEServer+JSON.h"
-#import "RTCMediaConstraints+JSON.h"
-#import "RTCSessionDescription+JSON.h"
-
 #endif /* bridge_h */

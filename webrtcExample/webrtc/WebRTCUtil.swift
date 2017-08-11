@@ -33,11 +33,25 @@ class WebRTCUtil: NSObject {
             return nil
         }
         
-        return jsonFromData(data: description.jsonData())
+        let dic:NSDictionary = [
+            "type": RTCSessionDescription.string(for: description.type)
+            , "sdp": description.sdp
+        ]
+        
+        return dic
     }
     
     static func jsonFromCandidate(candidate:RTCIceCandidate)->NSDictionary?{
-        return jsonFromData(data: candidate.jsonData())
+        
+        let dic:NSDictionary = [
+            "type": "candidate"
+            , "sdpMid": candidate.sdpMid
+            , "sdpMLineIndex": candidate.sdpMLineIndex
+            , "candidate": candidate.sdp
+        ]
+        
+        return dic
+        
     }
     
     static func jsonFromData(data:Data)->NSDictionary?{

@@ -14,7 +14,7 @@ import UIKit
 extension String {
     static func getRandomStringWithLength(length: Int) -> String {
         
-        let alphabet = "1234567890abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+        let alphabet = "1234567890abcdefghijklmnopqrstuvwxyz"
         let upperBound = UInt32(alphabet.characters.count)
         
         return String((0..<length).map { _ -> Character in
@@ -96,7 +96,7 @@ class ViewController: UIViewController {
     }
     
     private func setupRoom(){
-        let roomKey:String? = "-Kr-JqhdoZ1YtdeO0-9r"
+        let roomKey:String? = "abcdef"
         
         if let roomKey = roomKey{
             self.roomKey = roomKey

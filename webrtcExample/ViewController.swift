@@ -7,9 +7,6 @@
 //
 
 import UIKit
-import FirebaseDatabase
-
-import UIKit
 
 extension String {
     static func getRandomStringWithLength(length: Int) -> String {

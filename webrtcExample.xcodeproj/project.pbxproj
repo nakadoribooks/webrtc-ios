@@ -16,7 +16,6 @@
 		7B873D421E8F8F02002E3F25 /* WebRTC.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B873D381E8F8F02002E3F25 /* WebRTC.swift */; };
 		7B873D481E8F9D2A002E3F25 /* WebRTCUtil.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B873D471E8F9D2A002E3F25 /* WebRTCUtil.swift */; };
 		7B9628261E8FB23E00D3B770 /* Wamp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7B9628251E8FB23E00D3B770 /* Wamp.swift */; };
-		7BA761321F3943D600AB4505 /* GoogleService-Info.plist in Resources */ = {isa = PBXBuildFile; fileRef = 7BA761311F3943D600AB4505 /* GoogleService-Info.plist */; };
 		7BA761341F396D7700AB4505 /* Connection.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA761331F396D7700AB4505 /* Connection.swift */; };
 		7BC6FCE71E8F66A60003CC19 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BC6FCE61E8F66A60003CC19 /* AppDelegate.swift */; };
 		7BC6FCE91E8F66A60003CC19 /* ViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BC6FCE81E8F66A60003CC19 /* ViewController.swift */; };
@@ -69,7 +68,6 @@
 		7B873D381E8F8F02002E3F25 /* WebRTC.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebRTC.swift; sourceTree = "<group>"; };
 		7B873D471E8F9D2A002E3F25 /* WebRTCUtil.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = WebRTCUtil.swift; sourceTree = "<group>"; };
 		7B9628251E8FB23E00D3B770 /* Wamp.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Wamp.swift; sourceTree = "<group>"; };
-		7BA761311F3943D600AB4505 /* GoogleService-Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
 		7BA761331F396D7700AB4505 /* Connection.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = Connection.swift; sourceTree = "<group>"; };
 		7BC6FCE31E8F66A60003CC19 /* webrtcExample.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = webrtcExample.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		7BC6FCE61E8F66A60003CC19 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
@@ -183,7 +181,6 @@
 				7BC6FCED1E8F66A60003CC19 /* Assets.xcassets */,
 				7BC6FCEF1E8F66A60003CC19 /* LaunchScreen.storyboard */,
 				7BC6FCF21E8F66A60003CC19 /* Info.plist */,
-				7BA761311F3943D600AB4505 /* GoogleService-Info.plist */,
 				7B3FD6F61E8F794100772830 /* bridge.h */,
 				7B3246671E908AB200E72D13 /* Util.swift */,
 				7BA761331F396D7700AB4505 /* Connection.swift */,
@@ -333,7 +330,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				7BC6FCF11E8F66A60003CC19 /* LaunchScreen.storyboard in Resources */,
-				7BA761321F3943D600AB4505 /* GoogleService-Info.plist in Resources */,
 				7BC6FCEE1E8F66A60003CC19 /* Assets.xcassets in Resources */,
 				7BC6FCEC1E8F66A60003CC19 /* Main.storyboard in Resources */,
 			);

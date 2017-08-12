@@ -39,6 +39,8 @@ class ViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
+        view.backgroundColor = UIColor.white
+        
         setupRoom()
         setupWamp()
         setupStream()
@@ -119,23 +121,27 @@ class ViewController: UIViewController {
                 
                 self.wamp.publishCallme()
             }
-            , onReceiveOffer:{(targetId:String, sdp:NSDictionary) -> Void in
+            , onReceiveOffer:{(targetId:String, sdp:String) -> Void in
                 print("onReceiveOffer")
+                
                 let connection = self.createConnection(targetId: targetId)
-                connection.receiveOffer(offerSdp: sdp)
+                connection.receiveOffer(sdp: sdp)
             }
-            , onReceiveAnswer:{(targetId:String, sdp:NSDictionary) -> Void in
+            , onReceiveAnswer:{(targetId:String, sdp:String) -> Void in
                 print("onReceiveAnswer")
+                
                 guard let connection = self.findConnection(targetId: targetId) else{
                     return
                 }
+                
                 connection.receiveAnswer(sdp: sdp)
             }
-            , onReceiveCandidate:{(targetId:String ,candidate:NSDictionary) -> Void in
+            , onReceiveCandidate:{(targetId:String, sdp:String, sdpMid:String, sdpMLineIndex:Int32) -> Void in
                 guard let connection = self.findConnection(targetId: targetId) else{
                     return
                 }
-                connection.receiveCandidate(candidate: candidate)
+                
+                connection.receiveCandidate(sdp: sdp, sdpMid: sdpMid, sdpMLineIndex: sdpMLineIndex)
             }
             , onReceiveCallme:{(targetId:String) -> Void in
                 print("onReceivCallme")

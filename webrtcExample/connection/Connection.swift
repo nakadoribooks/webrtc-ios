@@ -15,9 +15,8 @@ class Connection: NSObject, ConnectionInterface {
     private var webRtc:WebRTCInterface!
     private let myId:String
     private let _targetId:String
-    private var _remoteStream:RTCMediaStream?
     
-    init(myId:String, targetId:String, wamp:WampInterface, onAddedStream:@escaping ConnectionOnAddedStream){
+    required init(myId:String, targetId:String, wamp:WampInterface, onAddedStream:@escaping ConnectionOnAddedStream){
         self.myId = myId
         self._targetId = targetId
         self.wamp = wamp
@@ -26,29 +25,31 @@ class Connection: NSObject, ConnectionInterface {
         super.init()
         
         webRtc = WebRTC(callbacks: (
-            onCreateOffer: {(sdp:NSDictionary) -> Void in
-                
-                let jsonData = try! JSONSerialization.data(withJSONObject: sdp, options: [])
-                let jsonStr = String(bytes: jsonData, encoding: .utf8)!
-                
-                self.wamp.publishOffer(targetId: targetId, sdp: jsonStr)
+            onCreateOffer: {(sdp:String) -> Void in
+                self.wamp.publishOffer(targetId: targetId, sdp: sdp)
             }
-            , onCreateAnswer: {(sdp:NSDictionary) -> Void in
-                
-                let jsonData = try! JSONSerialization.data(withJSONObject: sdp, options: [])
-                let jsonStr = String(bytes: jsonData, encoding: .utf8)!
-                
-                self.wamp.publishAnswer(targetId: targetId, sdp: jsonStr)
+            , onCreateAnswer: {(sdp:String) -> Void in
+                self.wamp.publishAnswer(targetId: targetId, sdp: sdp)
             }
-            , onIceCandidate: {(iceCandidate:NSDictionary) -> Void in
-
-                let jsonData = try! JSONSerialization.data(withJSONObject: iceCandidate, options: [])
-                let jsonStr = String(bytes: jsonData, encoding: .utf8)!
+            , onIceCandidate: {(sdp:String, sdpMid:String, sdpMLineIndex:Int32) -> Void in
                 
-                self.wamp.publishCandidate(targetId: targetId, candidate: jsonStr)
+                let dic:NSDictionary = [
+                    "type": "candidate"
+                    , "sdpMid": sdpMid
+                    , "sdpMLineIndex": sdpMLineIndex
+                    , "candidate": sdp
+                ]
+                
+                do{
+                    let jsonData = try JSONSerialization.data(withJSONObject: dic, options: [])
+                    let jsonStr = String(bytes: jsonData, encoding: .utf8)!
+                    self.wamp.publishCandidate(targetId: targetId, candidate: jsonStr)
+                }catch let e{
+                    print(e)
+                }
+                
             }
             , onAddedStream: {(stream:RTCMediaStream) -> Void in
-                self._remoteStream = stream
                 self.onAddedStream(stream)
             }
             , onRemoveStream: {(stream:RTCMediaStream) -> Void in
@@ -70,14 +71,8 @@ class Connection: NSObject, ConnectionInterface {
         }
     }
     
-    var remoteStream:RTCMediaStream?{
-        get{
-            return _remoteStream
-        }
-    }
-    
-    func receiveOffer(offerSdp:NSDictionary){
-        webRtc.receiveOffer(remoteSdp: offerSdp)
+    func receiveOffer(sdp:String){
+        webRtc.receiveOffer(sdp: sdp)
     }
     
     func publishOffer(){
@@ -85,12 +80,12 @@ class Connection: NSObject, ConnectionInterface {
         webRtc.createOffer()
     }
     
-    func receiveAnswer(sdp:NSDictionary){
-        webRtc.receiveAnswer(remoteSdp: sdp)
+    func receiveAnswer(sdp:String){
+        webRtc.receiveAnswer(sdp: sdp)
     }
     
-    func receiveCandidate(candidate:NSDictionary){
-        webRtc.receiveCandidate(candidate: candidate)
+    func receiveCandidate(sdp:String, sdpMid:String, sdpMLineIndex:Int32){
+        webRtc.receiveCandidate(sdp: sdp, sdpMid: sdpMid, sdpMLineIndex: sdpMLineIndex)
     }
     
     func close(){

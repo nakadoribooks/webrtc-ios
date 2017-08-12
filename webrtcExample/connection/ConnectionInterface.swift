@@ -8,14 +8,16 @@
 
 import UIKit
 
+typealias ConnectionOnAddedStream = (_ stream:RTCMediaStream)->()
+
 protocol ConnectionInterface{
 
-    var remoteStream:RTCMediaStream?{ get }
+    init(myId:String, targetId:String, wamp:WampInterface, onAddedStream:@escaping ConnectionOnAddedStream)
     var targetId:String?{ get }
-    func receiveOffer(offerSdp:NSDictionary)
     func publishOffer()
-    func receiveAnswer(sdp:NSDictionary)
-    func receiveCandidate(candidate:NSDictionary)
+    func receiveOffer(sdp:String)
+    func receiveAnswer(sdp:String)
+    func receiveCandidate(sdp:String, sdpMid:String, sdpMLineIndex:Int32)
     func close()
     
 }

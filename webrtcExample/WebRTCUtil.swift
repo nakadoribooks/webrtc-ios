@@ -27,33 +27,6 @@ class WebRTCUtil: NSObject {
         return randomString
     }
     
-    static func jsonFromDescription(description:RTCSessionDescription?)->NSDictionary?{
-        guard let description = description else{
-            print("description is nil")
-            return nil
-        }
-        
-        let dic:NSDictionary = [
-            "type": RTCSessionDescription.string(for: description.type)
-            , "sdp": description.sdp
-        ]
-        
-        return dic
-    }
-    
-    static func jsonFromCandidate(candidate:RTCIceCandidate)->NSDictionary?{
-        
-        let dic:NSDictionary = [
-            "type": "candidate"
-            , "sdpMid": candidate.sdpMid
-            , "sdpMLineIndex": candidate.sdpMLineIndex
-            , "candidate": candidate.sdp
-        ]
-        
-        return dic
-        
-    }
-    
     static func jsonFromData(data:Data)->NSDictionary?{
         let json = try! JSONSerialization.jsonObject(with: data, options: [])
         

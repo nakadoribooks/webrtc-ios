@@ -28,7 +28,7 @@ class Wamp: NSObject, WampInterface, SwampSessionDelegate {
     private let userId:String
     private let callbacks:WampCallback
     
-    init(roomId:String, userId:String, callbacks:WampCallback){
+    required init(roomId:String, userId:String, callbacks:WampCallback){
         self.roomId = roomId
         self.userId = userId
         self.callbacks = callbacks
@@ -82,7 +82,13 @@ class Wamp: NSObject, WampInterface, SwampSessionDelegate {
                 return
             }
             
-            let sdp = try! JSONSerialization.jsonObject(with: sdpString.data(using: .utf8)!, options: .allowFragments) as! NSDictionary
+            let dic = try! JSONSerialization.jsonObject(with: sdpString.data(using: .utf8)!, options: .allowFragments) as! NSDictionary
+            
+            guard let sdp = dic.object(forKey: "sdp") as? String else{
+                print("noSDp")
+                return;
+            }
+            
             self.callbacks.onReceiveAnswer(targetId, sdp)
         }
         
@@ -94,7 +100,13 @@ class Wamp: NSObject, WampInterface, SwampSessionDelegate {
                 return
             }
             
-            let sdp = try! JSONSerialization.jsonObject(with: sdpString.data(using: .utf8)!, options: .allowFragments) as! NSDictionary
+            let dic = try! JSONSerialization.jsonObject(with: sdpString.data(using: .utf8)!, options: .allowFragments) as! NSDictionary
+            
+            guard let sdp = dic.object(forKey: "sdp") as? String else{
+                print("noSDp")
+                return;
+            }
+            
             self.callbacks.onReceiveOffer(targetId, sdp)
         }
         
@@ -108,9 +120,21 @@ class Wamp: NSObject, WampInterface, SwampSessionDelegate {
             }
             
             let data = candidateStr.data(using: String.Encoding.utf8)!
-            let candidate = try! JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments) as! NSDictionary
             
-            self.callbacks.onReceiveCandidate(targetId, candidate)
+            do{
+                let dic = try JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments) as! NSDictionary
+                
+                guard let sdp = dic["candidate"] as? String
+                    , let sdpMLineIndex = dic["sdpMLineIndex"] as? Int32
+                    , let sdpMid = dic["sdpMid"] as? String else{
+                        
+                        print("invalid candiate")
+                        return
+                }
+                self.callbacks.onReceiveCandidate(targetId, sdp, sdpMid, sdpMLineIndex)
+            }catch let e{
+                print(e)
+            }
         }
         
         session.subscribe(callmeTopic(), onSuccess: { (subscription) in

@@ -60,7 +60,7 @@ class WebRTC: NSObject, WebRTCInterface, RTCPeerConnectionDelegate {
     private var peerConnection:RTCPeerConnection?
     private let callbacks:WebRTCCallback
     
-    init(callbacks:WebRTCCallback){
+    required init(callbacks:WebRTCCallback){
         self.callbacks = callbacks
         super.init()
         
@@ -76,28 +76,13 @@ class WebRTC: NSObject, WebRTCInterface, RTCPeerConnectionDelegate {
     
     // MARK: inteface ------
     
-    func receiveCandidate(candidate:NSDictionary){
-        guard let candidate = candidate as? [AnyHashable:Any]
-            , let sdp = candidate["candidate"] as? String
-            , let sdpMLineIndex = candidate["sdpMLineIndex"] as? Int32
-            , let sdpMid = candidate["sdpMid"] as? String else{
-                
-                print("invalid candiate")
-            return
-        }
-        
+    func receiveCandidate(sdp:String, sdpMid:String, sdpMLineIndex:Int32){
         let rtcCandidate = RTCIceCandidate(sdp: sdp, sdpMLineIndex: sdpMLineIndex, sdpMid: sdpMid)
         self.peerConnection?.add(rtcCandidate)
     }
     
-    func receiveAnswer(remoteSdp:NSDictionary){
-        
-        guard let sdpContents = remoteSdp.object(forKey: "sdp") as? String else{
-            print("noSDp")
-            return;
-        }
-        
-        let sdp = RTCSessionDescription(type: .answer, sdp: sdpContents)
+    func receiveAnswer(sdp:String){
+        let sdp = RTCSessionDescription(type: .answer, sdp: sdp)
         
         // 1. remote SDP を登録
         peerConnection?.setRemoteDescription(sdp, completionHandler: { (error) in
@@ -105,15 +90,9 @@ class WebRTC: NSObject, WebRTCInterface, RTCPeerConnectionDelegate {
         })
     }
     
-    func receiveOffer(remoteSdp:NSDictionary){
-        
-        guard let sdpContents = remoteSdp.object(forKey: "sdp") as? String else{
-            print("noSDp")
-            return;
-        }
-        
+    func receiveOffer(sdp:String){
         // 1. remote SDP を登録
-        let remoteSdp = RTCSessionDescription(type: .offer, sdp: sdpContents)
+        let remoteSdp = RTCSessionDescription(type: .offer, sdp: sdp)
         peerConnection?.setRemoteDescription(remoteSdp, completionHandler: { (error) in
 
             // 2. answerを作る
@@ -128,12 +107,23 @@ class WebRTC: NSObject, WebRTCInterface, RTCPeerConnectionDelegate {
                 self.peerConnection?.setLocalDescription(sdp, completionHandler: { (error) in
                     
                     // 3. answer を送る
-                    guard let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
-                        print("no localDescription")
-                        return ;
+                    guard let description = self.peerConnection?.localDescription else{
+                        return;
                     }
                     
-                    self.callbacks.onCreateAnswer(localDescription)
+                    let dic:NSDictionary = [
+                        "type": RTCSessionDescription.string(for: description.type)
+                        , "sdp": description.sdp
+                    ]
+                    
+                    do{
+                        let jsonData = try JSONSerialization.data(withJSONObject: dic, options: [])
+                        let sdp = String(bytes: jsonData, encoding: .utf8)!
+                        self.callbacks.onCreateAnswer(sdp)
+                    }catch let e{
+                        print(e)
+                        return
+                    }                    
                 })
                 
             })
@@ -153,12 +143,24 @@ class WebRTC: NSObject, WebRTCInterface, RTCPeerConnectionDelegate {
             // 2.ローカルにSDPを登録
             self.peerConnection?.setLocalDescription(description, completionHandler: { (error) in
                 // 3. offer を送る
-                guard let localDescription = WebRTCUtil.jsonFromDescription(description: self.peerConnection?.localDescription) else{
-                    print("no localDescription")
-                    return ;
+                guard let description = self.peerConnection?.localDescription else{
+                    return;
                 }
                 
-                self.callbacks.onCreateOffer(localDescription)
+                let dic:NSDictionary = [
+                    "type": RTCSessionDescription.string(for: description.type)
+                    , "sdp": description.sdp
+                ]
+                
+                do{
+                    let jsonData = try JSONSerialization.data(withJSONObject: dic, options: [])
+                    let sdp = String(bytes: jsonData, encoding: .utf8)!
+                    self.callbacks.onCreateOffer(sdp)
+                }catch let e{
+                    print(e)
+                    return
+                }
+                
             })
         })
     }
@@ -185,8 +187,8 @@ class WebRTC: NSObject, WebRTCInterface, RTCPeerConnectionDelegate {
     
     // for Trickle ice
     public func peerConnection(_ peerConnection: RTCPeerConnection, didGenerate candidate: RTCIceCandidate){
-        if let candidateJson = WebRTCUtil.jsonFromCandidate(candidate: candidate){
-            self.callbacks.onIceCandidate(candidateJson)
+        if let sdpMid = candidate.sdpMid{
+            self.callbacks.onIceCandidate(candidate.sdp, sdpMid, candidate.sdpMLineIndex)
         }
     }
     

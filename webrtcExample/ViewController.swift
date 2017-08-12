@@ -25,13 +25,13 @@ extension String {
 
 class ViewController: UIViewController {
 
-    private let wamp = Wamp.sharedInstance
+    private var wamp:Wamp!
     private var connectionList:[Connection] = []
-    private var streamWrapperList:[StreamWrapper] = []
+    private var remoteRenderList:[RemoteRenderView] = []
     
     private let remoteLayer = UIView(frame: windowFrame())
-    private let localLayer = UIView(frame: CGRect(x: 0, y: windowHeight()-WebRTC.ViewSize - 20, width: windowWidth(), height: WebRTC.ViewSize + 20))
-    private var roomKey:String!
+    private let localLayer = UIView(frame: CGRect(x: 0, y: windowHeight() - LocalRenderView.Size.height - 20, width: windowWidth(), height: LocalRenderView.Size.height + 20))
+    private var roomId:String!
     private let userId = String.getRandomStringWithLength(length: 8)
     private let toggleButton = UIButton()
     
@@ -46,15 +46,21 @@ class ViewController: UIViewController {
         setupWamp()
         setupStream()
         
-        Wamp.sharedInstance.connect()
+        wamp.connect()
         
         view.addSubview(remoteLayer)
         view.addSubview(localLayer)
         
+        setupLocalView()
+    }
+    
+    private func setupLocalView(){
         localLayer.backgroundColor = UIColor.gray
-        localLayer.addSubview(WebRTC.localView)
+        let localRenderView = LocalRenderView(stream: WebRTC.localStream!, targetId: userId)
+        localRenderView.view.frame.origin = CGPoint(x: 10, y: 10)
+        localLayer.addSubview(localRenderView.view)
         
-        let labelX = WebRTC.ViewSize + 20.0
+        let labelX = LocalRenderView.Size.width + 20.0
         let labelWidth = windowWidth() - labelX - 10
         let label = UILabel(frame: CGRect(x: labelX, y: 10, width: labelWidth, height: 50))
         label.numberOfLines = 2
@@ -96,35 +102,30 @@ class ViewController: UIViewController {
     }
     
     private func setupRoom(){
-        let roomKey:String? = "abcdef"
+        let roomId:String? = "abcdef"
         
-        if let roomKey = roomKey{
-            self.roomKey = roomKey
+        if let roomId = roomId{
+            self.roomId = roomId
             return
         }
         
-        let ref = Database.database().reference().child("rooms")
-        let roomRef = ref.childByAutoId()
-        self.roomKey = roomRef.key
-        
-        print("roomKey:\(roomRef.key)")
+        self.roomId = String.getRandomStringWithLength(length: 8)        
+        print("roomId:\(roomId)")
     }
     
     private func setupWamp(){
         
-        let wamp = Wamp.sharedInstance
-        Wamp.sharedInstance.setup(roomKey: roomKey, userId: userId
+        let wamp = Wamp(roomId: roomId, userId: userId
         , callbacks: (
             onOpen:{() -> Void in
                 print("onOpen")
                 
-                let topic = wamp.endpointCallme()
-                wamp.session.publish(topic, options: [:], args: [self.userId], kwargs: [:])
+                self.wamp.publishCallme()
             }
             , onReceiveOffer:{(targetId:String, sdp:NSDictionary) -> Void in
                 print("onReceiveOffer")
                 let connection = self.createConnection(targetId: targetId)
-                connection.publishAnswer(offerSdp: sdp)
+                connection.receiveOffer(offerSdp: sdp)
             }
             , onReceiveAnswer:{(targetId:String, sdp:NSDictionary) -> Void in
                 print("onReceiveAnswer")
@@ -133,7 +134,12 @@ class ViewController: UIViewController {
                 }
                 connection.receiveAnswer(sdp: sdp)
             }
-            
+            , onReceiveCandidate:{(targetId:String ,candidate:NSDictionary) -> Void in
+                guard let connection = self.findConnection(targetId: targetId) else{
+                    return
+                }
+                connection.receiveCandidate(candidate: candidate)
+            }
             , onReceiveCallme:{(targetId:String) -> Void in
                 print("onReceivCallme")
                 let connection = self.createConnection(targetId:targetId)
@@ -153,29 +159,31 @@ class ViewController: UIViewController {
                 connection.close()
                 
                 // removeView
-                guard let streamIndex = self.streamWrapperList.index(where: { (row) -> Bool in
+                guard let streamIndex = self.remoteRenderList.index(where: { (row) -> Bool in
                     return row.targetId == targetId
                 }) else{
                     return;
                 }
                 
-                let streamWrapper = self.streamWrapperList.remove(at: streamIndex)
-                streamWrapper.view.removeFromSuperview()
+                let remoteRender = self.remoteRenderList.remove(at: streamIndex)
+                remoteRender.view.removeFromSuperview()
                 
                 self.calcRemoteViewPosition()
             }
        ))
+        
+        self.wamp = wamp
     }
     
     private func createConnection(targetId:String)->Connection{
-        let connection = Connection(myId: userId, targetId: targetId) { (streamWrapper) in
+        let connection = Connection(myId: userId, targetId: targetId, wamp: wamp) { (remoteStream) in
             print("onAeedStream")
             
-            self.remoteLayer.addSubview(streamWrapper.view)
-            self.streamWrapperList.append(streamWrapper)
-            
+            let remoteRenderView = RemoteRenderView(stream: remoteStream, targetId: targetId)
+            self.remoteLayer.addSubview(remoteRenderView.view)
+            self.remoteRenderList.append(remoteRenderView)
+
             self.calcRemoteViewPosition()
-            
         }
         connectionList.append(connection)
         return connection
@@ -197,8 +205,8 @@ class ViewController: UIViewController {
         var y:CGFloat = 20.0
         var x:CGFloat = 20
         
-        for i in 0..<streamWrapperList.count{
-            let view = streamWrapperList[i].view
+        for i in 0..<remoteRenderList.count{
+            let view = remoteRenderList[i].view
             view.frame.origin = CGPoint(x: x, y: y)
             
             if x + view.frame.size.width > windowWidth(){

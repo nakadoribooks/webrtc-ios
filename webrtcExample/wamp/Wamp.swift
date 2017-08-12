@@ -14,9 +14,9 @@ enum WampTopic:String{
     
     case callme = "com.nakadoribook.webrtc.[roomId].callme"
     , close = "com.nakadoribook.webrtc.[roomId].close"
-    , answer = "com.nakadoribook.webrtc.[roomId].[id].answer"
-    , offer = "com.nakadoribook.webrtc.[roomId].[id].offer"
-    , candidate = "com.nakadoribook.webrtc.[roomId].[id].candidate"
+    , answer = "com.nakadoribook.webrtc.[roomId].[userId].answer"
+    , offer = "com.nakadoribook.webrtc.[roomId].[userId].offer"
+    , candidate = "com.nakadoribook.webrtc.[roomId].[userId].candidate"
 
 }
 
@@ -31,26 +31,29 @@ typealias WampCallbacks = (onOpen:WampOnOpenHandler
     , onReceiveAnswer:WampReceiveAnswerHandler
     , onReceiveOffer:WampReceiveOfferHandler
     , onReceiveCallme:WampReceiveCallmeHandler
-    , onCloseConnection:WampOncloseConnectionHandler)
+    , onCloseConnection:WampOncloseConnectionHandler
+    , onReceiveCandidate:WampReceiveCandidateHandler)
 
 class Wamp: NSObject, SwampSessionDelegate {
 
-    static let sharedInstance = Wamp()
-    private var _session:SwampSession!
+    private var session:SwampSession!
     
-    private override init() {
-        super.init()        
+    private let roomId:String
+    private let userId:String
+    private let callbacks:WampCallbacks
+    
+    init(roomId:String, userId:String, callbacks:WampCallbacks){
+        self.roomId = roomId
+        self.userId = userId
+        self.callbacks = callbacks
+        super.init()
     }
     
     deinit {
         print("deinit Wamp")
     }
     
-    var session:SwampSession{
-        get{
-            return _session
-        }
-    }
+    // MARK: interface
     
     func connect(){
         let swampTransport = WebSocketSwampTransport(wsEndpoint:  URL(string: "wss://nakadoribooks-webrtc.herokuapp.com")!)
@@ -59,30 +62,32 @@ class Wamp: NSObject, SwampSessionDelegate {
         swampSession.connect()
     }
     
-    // MARK: private
-    
-    private func resultToSdp(results:[Any]?)->NSDictionary?{
-        
-        if let sdp = results?.first as? NSDictionary{
-            return sdp;
-        }
-        
-        return nil;
+    func publishCallme(){
+        let topic = self.callmeTopic()
+        self.session.publish(topic, options: [:], args: [self.userId], kwargs: [:])
     }
     
-    // MARK: SwampSessionDelegate
-    
-    func swampSessionHandleChallenge(_ authMethod: String, extra: [String: Any]) -> String{
-        return SwampCraAuthHelper.sign("secret123", challenge: extra["challenge"] as! String)
+    func publishOffer(targetId:String ,sdp:String){
+        let topic = self.offerTopic(userId: targetId)
+        self.session.publish(topic, options: [:], args: [self.userId, sdp], kwargs: [:])
     }
     
-    func swampSessionConnected(_ session: SwampSession, sessionId: Int){
-        self._session = session
-        
+    func publishAnswer(targetId:String, sdp:String){
+        let topic = self.answerTopic(userId: targetId)
+        self.session.publish(topic, options: [:], args: [self.userId, sdp], kwargs: [:])
+    }
+    
+    func publishCandidate(targetId:String, candidate:String){
+        let topic = self.candidateTopic(userId: targetId)
+        self.session.publish(topic, options: [:], args: [self.userId, candidate], kwargs: [:])
+    }
+    
+    // MARK: 
+    
+    private func onConnect(){
         // subscribe
-        print("answerTopic", endpointAnswer(targetId: userId))
         
-        session.subscribe(endpointAnswer(targetId: userId), onSuccess: { (subscription) in
+        session.subscribe(answerTopic(userId: userId), onSuccess: { (subscription) in
         }, onError: { (details, error) in
         }) { (details, args, kwArgs) in
             print("onReceiveAnswer")
@@ -95,8 +100,7 @@ class Wamp: NSObject, SwampSessionDelegate {
             self.callbacks.onReceiveAnswer(targetId, sdp)
         }
         
-        print("offerTopic", endpointOffer(targetId: userId))
-        session.subscribe(endpointOffer(targetId: userId), onSuccess: { (subscription) in
+        session.subscribe(offerTopic(userId: userId), onSuccess: { (subscription) in
         }, onError: { (details, error) in
         }) { (details, args, kwArgs) in
             guard let args = args, let targetId = args[0] as? String, let sdpString = args[1] as? String else{
@@ -108,7 +112,22 @@ class Wamp: NSObject, SwampSessionDelegate {
             self.callbacks.onReceiveOffer(targetId, sdp)
         }
         
-        session.subscribe(endpointCallme(), onSuccess: { (subscription) in
+        session.subscribe(candidateTopic(userId: userId), onSuccess: { (subscription) in
+        }, onError: { (results, error) in
+        }) { (results, args, kwArgs) in
+            
+            guard let targetId = args?[0] as? String, let candidateStr = args?[1] as? String else{
+                print("no candidate")
+                return
+            }
+            
+            let data = candidateStr.data(using: String.Encoding.utf8)!
+            let candidate = try! JSONSerialization.jsonObject(with: data, options: JSONSerialization.ReadingOptions.allowFragments) as! NSDictionary
+            
+            self.callbacks.onReceiveCandidate(targetId, candidate)
+        }
+        
+        session.subscribe(callmeTopic(), onSuccess: { (subscription) in
         }, onError: { (details, error) in
         }) { (details, args, kwArgs) in
             guard let args = args, let targetId = args[0] as? String else{
@@ -122,7 +141,7 @@ class Wamp: NSObject, SwampSessionDelegate {
             self.callbacks.onReceiveCallme(targetId)
         }
         
-        session.subscribe(endpointClose(), onSuccess: { (subscription) in
+        session.subscribe(closeTopic(), onSuccess: { (subscription) in
         }, onError: { (details, error) in
         }) { (details, args, kwArgs) in
             guard let args = args, let targetId = args[0] as? String else{
@@ -136,48 +155,48 @@ class Wamp: NSObject, SwampSessionDelegate {
             
             self.callbacks.onCloseConnection(targetId)
         }
-
         
         self.callbacks.onOpen()
+    }
+    
+    // MARK: SwampSessionDelegate
+    
+    func swampSessionHandleChallenge(_ authMethod: String, extra: [String: Any]) -> String{
+        return SwampCraAuthHelper.sign("secret123", challenge: extra["challenge"] as! String)
+    }
+    
+    func swampSessionConnected(_ session: SwampSession, sessionId: Int){
+        self.session = session
+        onConnect()
     }
     
     func swampSessionEnded(_ reason: String){
         print("swampSessionEnded: \(reason)")
     }
     
-    private var roomKey:String!
-    private var userId:String!
-    private var callbacks:WampCallbacks!
-    
-    func setup(roomKey:String, userId:String, callbacks:WampCallbacks){
-        self.roomKey = roomKey
-        self.userId = userId
-        self.callbacks = callbacks
-    }
-    
     static let HandshakeEndpint = "wss://nakadoribooks-webrtc.herokuapp.com"
     
     private func roomTopic(base:String)->String{
-        return base.replacingOccurrences(of: "[roomId]", with: self.roomKey)
+        return base.replacingOccurrences(of: "[roomId]", with: self.roomId)
     }
     
-    func endpointAnswer(targetId:String)->String{
-        return self.roomTopic(base: WampTopic.answer.rawValue.replacingOccurrences(of: "[id]", with: targetId))
+    func answerTopic(userId:String)->String{
+        return self.roomTopic(base: WampTopic.answer.rawValue.replacingOccurrences(of: "[userId]", with: userId))
     }
     
-    func endpointOffer(targetId:String)->String{
-        return self.roomTopic(base: WampTopic.offer.rawValue.replacingOccurrences(of: "[id]", with: targetId))
+    func offerTopic(userId:String)->String{
+        return self.roomTopic(base: WampTopic.offer.rawValue.replacingOccurrences(of: "[userId]", with: userId))
     }
     
-    func endpointCandidate(targetId:String)->String{
-        return self.roomTopic(base: WampTopic.candidate.rawValue.replacingOccurrences(of: "[id]", with: targetId))
+    func candidateTopic(userId:String)->String{
+        return self.roomTopic(base: WampTopic.candidate.rawValue.replacingOccurrences(of: "[userId]", with: userId))
     }
     
-    func endpointCallme()->String{
+    func callmeTopic()->String{
         return self.roomTopic(base: WampTopic.callme.rawValue)
     }
     
-    func endpointClose()->String{
+    func closeTopic()->String{
         return self.roomTopic(base: WampTopic.close.rawValue)
     }
     

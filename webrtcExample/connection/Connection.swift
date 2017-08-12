@@ -8,20 +8,18 @@
 
 import UIKit
 
-typealias ConnectionOnAddedStream = (_ stream:RTCMediaStream)->()
+class Connection: NSObject, ConnectionInterface {
 
-class Connection: NSObject {
-
-    private let wamp:Wamp
+    private let wamp:WampInterface
     private let onAddedStream:ConnectionOnAddedStream
-    private var webRtc:WebRTC!
+    private var webRtc:WebRTCInterface!
     private let myId:String
-    let targetId:String
+    private let _targetId:String
     private var _remoteStream:RTCMediaStream?
     
-    init(myId:String, targetId:String, wamp:Wamp, onAddedStream:@escaping ConnectionOnAddedStream){
+    init(myId:String, targetId:String, wamp:WampInterface, onAddedStream:@escaping ConnectionOnAddedStream){
         self.myId = myId
-        self.targetId = targetId
+        self._targetId = targetId
         self.wamp = wamp
         self.onAddedStream = onAddedStream
         
@@ -65,6 +63,12 @@ class Connection: NSObject {
     }
     
     // MARK: interface
+    
+    var targetId:String?{
+        get{
+            return _targetId
+        }
+    }
     
     var remoteStream:RTCMediaStream?{
         get{

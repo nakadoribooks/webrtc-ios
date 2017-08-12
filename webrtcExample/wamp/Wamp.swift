@@ -20,29 +20,15 @@ enum WampTopic:String{
 
 }
 
-typealias WampOnOpenHandler = (()->())
-typealias WampReceiveAnswerHandler = ((_ targetId:String, _ sdp:NSDictionary)->())
-typealias WampReceiveOfferHandler = ((_ targetId:String, _ sdp:NSDictionary)->())
-typealias WampReceiveCandidateHandler = ((_ targetId:String, _ candidate:NSDictionary)->())
-typealias WampReceiveCallmeHandler = ((_ targetId:String)->())
-typealias WampOncloseConnectionHandler = ((_ targetId:String)->())
-
-typealias WampCallbacks = (onOpen:WampOnOpenHandler
-    , onReceiveAnswer:WampReceiveAnswerHandler
-    , onReceiveOffer:WampReceiveOfferHandler
-    , onReceiveCallme:WampReceiveCallmeHandler
-    , onCloseConnection:WampOncloseConnectionHandler
-    , onReceiveCandidate:WampReceiveCandidateHandler)
-
-class Wamp: NSObject, SwampSessionDelegate {
+class Wamp: NSObject, WampInterface, SwampSessionDelegate {
 
     private var session:SwampSession!
     
     private let roomId:String
     private let userId:String
-    private let callbacks:WampCallbacks
+    private let callbacks:WampCallback
     
-    init(roomId:String, userId:String, callbacks:WampCallbacks){
+    init(roomId:String, userId:String, callbacks:WampCallback){
         self.roomId = roomId
         self.userId = userId
         self.callbacks = callbacks

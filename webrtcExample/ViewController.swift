@@ -22,8 +22,8 @@ extension String {
 
 class ViewController: UIViewController {
 
-    private var wamp:Wamp!
-    private var connectionList:[Connection] = []
+    private var wamp:WampInterface!
+    private var connectionList:[ConnectionInterface] = []
     private var remoteRenderList:[RemoteRenderView] = []
     
     private let remoteLayer = UIView(frame: windowFrame())
@@ -186,7 +186,7 @@ class ViewController: UIViewController {
         return connection
     }
     
-    private func findConnection(targetId:String)->Connection?{
+    private func findConnection(targetId:String)->ConnectionInterface?{
         for i in 0..<connectionList.count{
             let connection = connectionList[i]
             if(connection.targetId == targetId){

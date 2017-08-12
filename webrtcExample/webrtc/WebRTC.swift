@@ -8,18 +8,7 @@
 
 import UIKit
 
-typealias WebRTCOnCreateOfferHandler = (_ sdp:NSDictionary) -> ()
-typealias WebRTCOnCreateAnswerHandler = (_ sdp:NSDictionary) -> ()
-typealias WebRTCOnIceCandidateHandler = (_ candidate:NSDictionary) -> ()
-typealias WebRTCOnAddedStream = (_ stream:RTCMediaStream) -> ()
-typealias WebRTCOnRemoveStream = (_ stream:RTCMediaStream) -> ()
-typealias WebRTCCallbacks = (onCreateOffer:WebRTCOnCreateOfferHandler
-    , onCreateAnswer:WebRTCOnCreateAnswerHandler
-    , onIceCandidate:WebRTCOnIceCandidateHandler
-    , onAddedStream:WebRTCOnAddedStream
-    , onRemoveStream:WebRTCOnRemoveStream)
-
-class WebRTC: NSObject, RTCPeerConnectionDelegate {
+class WebRTC: NSObject, WebRTCInterface, RTCPeerConnectionDelegate {
     
     // MARK: static -----
     
@@ -69,9 +58,9 @@ class WebRTC: NSObject, RTCPeerConnectionDelegate {
     
     private var remoteStream:RTCMediaStream?
     private var peerConnection:RTCPeerConnection?
-    private let callbacks:WebRTCCallbacks
+    private let callbacks:WebRTCCallback
     
-    init(callbacks:WebRTCCallbacks){
+    init(callbacks:WebRTCCallback){
         self.callbacks = callbacks
         super.init()
         
